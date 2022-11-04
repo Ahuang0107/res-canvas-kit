@@ -1,4 +1,4 @@
-import { Color, Paint } from 'canvaskit-wasm';
+import { Color, Paint } from '@skeditor/canvaskit-wasm';
 import { Rect } from '../../base/rect';
 import { BaseLayerView } from '../base/base-layer-view';
 import { CanvasKit } from '../../utils';

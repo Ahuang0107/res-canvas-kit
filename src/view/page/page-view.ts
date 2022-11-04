@@ -12,6 +12,7 @@ export class PageView extends BaseLayerView {
 	absoluteChildren: BaseLayerView[] = [];
 	xAbsoluteChildren: BaseLayerView[] = [];
 	yAbsoluteChildren: BaseLayerView[] = [];
+	autoDirty = false;
 
 	constructor() {
 		super(new Rect());

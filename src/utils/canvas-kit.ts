@@ -1,10 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import CanvasKitInit from 'canvaskit-wasm/bin/canvaskit.js';
+import CanvasKitInit from '@skeditor/canvaskit-wasm/bin/canvaskit.js';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import CanvasKitWasm from 'canvaskit-wasm/bin/canvaskit.wasm?url';
-import { CanvasKit } from 'canvaskit-wasm';
+import CanvasKitWasm from '@skeditor/canvaskit-wasm/bin/canvaskit.wasm?url';
+import { CanvasKit } from '@skeditor/canvaskit-wasm';
 
 let CanvasKit: CanvasKit;
 

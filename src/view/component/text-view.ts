@@ -1,4 +1,4 @@
-import { Font, Paint } from 'canvaskit-wasm';
+import { Font, Paint } from '@skeditor/canvaskit-wasm';
 import { Rect } from '../../base/rect';
 import { BaseLayerView } from '../base/base-layer-view';
 import { Point } from '../../base/point';

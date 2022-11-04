@@ -19,7 +19,7 @@
   },
   "type": "module",
   "dependencies": {
-    "canvaskit-wasm": "^0.37.0",
+    "@skeditor/canvaskit-wasm": "0.28.1",
     "bowser": "1.9.2",
     "rxjs": "6.2.1",
     "ts-invariant": "^0.10.3"

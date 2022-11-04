@@ -25,7 +25,13 @@
 	const canvasView = await CanvasView.create(canvasContainer);
 
 	const loadingView = new PageView();
-	loadingView.pushA([new AnimaView(new Rect(400, 400, 500, 500), json)]);
+	loadingView.autoDirty = true;
+	const width = 300;
+	const height = 300;
+	const bound = canvasContainer.getBoundingClientRect();
+	const x = (bound.width - width) / 2;
+	const y = (bound.height - height) / 2;
+	loadingView.pushA([new AnimaView(new Rect(x, y, width, height), json)]);
 	canvasView.selectPage(canvasView.pushPage(loadingView) - 1);
 	canvasView.markDirty();
 	canvasView.startTick();

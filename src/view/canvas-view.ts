@@ -1,4 +1,4 @@
-import { Canvas, GrDirectContext, Surface } from 'canvaskit-wasm';
+import { Canvas, GrDirectContext, Surface } from '@skeditor/canvaskit-wasm';
 import { CanvasKit, CanvasKitPromised } from '../utils';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Rect } from '../base/rect';
@@ -98,7 +98,7 @@ export class CanvasView extends Disposable {
 	private createCanvasEl(): { canvasEl: HTMLCanvasElement; grContext: GrDirectContext } {
 		const canvasEl = document.createElement('canvas');
 		canvasEl.style.display = 'block';
-		const grContext = CanvasKit.MakeWebGLContext(CanvasKit.GetWebGLContext(canvasEl));
+		const grContext = CanvasKit.MakeGrContext(CanvasKit.GetWebGLContext(canvasEl));
 		invariant(grContext, 'fail to get GrDirectContext');
 		return { canvasEl, grContext };
 	}
@@ -177,7 +177,7 @@ export class CanvasView extends Disposable {
 			this.skCanvas.restore();
 			this.skSurface.flush();
 			console.log('>>> render costs:', Date.now() - start);
+			this.dirty = this.pageView.autoDirty;
 		}
-		this.dirty = false;
 	}
 }

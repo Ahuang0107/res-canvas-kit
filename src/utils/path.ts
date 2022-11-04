@@ -1,5 +1,5 @@
 import { Point } from '../base/point';
-import { Path } from 'canvaskit-wasm';
+import { Path } from '@skeditor/canvaskit-wasm';
 import { CanvasKit } from './canvas-kit';
 
 type CornerCalcInfo = {

@@ -1,6 +1,6 @@
 import { BaseLayerView } from '../base/base-layer-view';
 import { Rect } from '../../base/rect';
-import { SkottieAnimation } from 'canvaskit-wasm';
+import { SkottieAnimation } from '@skeditor/canvaskit-wasm';
 import { CanvasKit } from '../../utils';
 
 export class AnimaView extends BaseLayerView {
