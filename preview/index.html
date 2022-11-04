@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	<meta charset='UTF-8'>
+	<title>Browser Lib Preview</title>
+	<style>
+      html, body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+      }
+	</style>
+</head>
+<body>
+<script type='module'>
+	import { CanvasView, PageView, RectView, LineView, Rect, CanvasKit, AnimaView } from '../src/index.ts';
+	import json from './125704-blue-loading.json';
+
+	const canvasContainer = document.createElement('div');
+	canvasContainer.style.width = '100%';
+	canvasContainer.style.height = '100%';
+	canvasContainer.style.position = 'relative';
+	document.body.append(canvasContainer);
+
+	const canvasView = await CanvasView.create(canvasContainer);
+
+	const loadingView = new PageView();
+	loadingView.pushA([new AnimaView(new Rect(400, 400, 500, 500), json)]);
+	canvasView.selectPage(canvasView.pushPage(loadingView) - 1);
+	canvasView.markDirty();
+	canvasView.startTick();
+
+	setTimeout(() => {
+		const pageView = new PageView();
+		for (let i = 200; i < 700; i += 10) {
+			for (let j = 200; j < 700; j += 10) {
+				pageView.children.push(new RectView(new Rect(i, j, 5, 5), CanvasKit.BLACK));
+			}
+		}
+		pageView.absoluteChildren.push(new RectView(new Rect(0, 0, 10, 10), CanvasKit.YELLOW));
+		pageView.yAbsoluteChildren.push(new RectView(new Rect(10, 0, 1000, 10), CanvasKit.GREEN));
+		for (let i = 10; i < 1000; i += 10) {
+			pageView.yAbsoluteChildren.push(new LineView(new Rect(i, 0, 0, 10), CanvasKit.BLACK));
+		}
+		pageView.xAbsoluteChildren.push(new RectView(new Rect(0, 10, 10, 1000), CanvasKit.BLUE));
+		for (let i = 10; i < 1000; i += 10) {
+			pageView.xAbsoluteChildren.push(new LineView(new Rect(0, i, 10, 0), CanvasKit.BLACK));
+		}
+		canvasView.selectPage(canvasView.pushPage(pageView) - 1);
+	}, 5000);
+</script>
+</body>
+</html>

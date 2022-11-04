@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "vite",
+    "preview": "vite ./preview",
     "build": "rimraf dist && tsc"
   },
   "devDependencies": {
@@ -19,6 +19,9 @@
   },
   "type": "module",
   "dependencies": {
-    "canvaskit-wasm": "^0.37.0"
+    "canvaskit-wasm": "^0.37.0",
+    "bowser": "1.9.2",
+    "rxjs": "6.2.1",
+    "ts-invariant": "^0.10.3"
   }
 }
