@@ -12,6 +12,7 @@ export class ZoomController extends Disposable {
 		this._disposables.push(fromEvent(this.el, 'wheel').subscribe(this.onWheel));
 	}
 
+	// todo 鼠标滚动时，也需要调整当前处于move状态的view
 	private onWheel = (_e: Event) => {
 		const e = _e as WheelEvent;
 

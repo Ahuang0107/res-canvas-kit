@@ -1,5 +1,4 @@
 import { Point } from './point';
-import { CanvasKit } from '../utils';
 
 export class Rect {
 	constructor(
@@ -49,11 +48,25 @@ export class Rect {
 		return this.x <= pt.x && pt.x < this.right && this.y <= pt.y && pt.y < this.bottom;
 	}
 
-	toXYWHRect(): Float32Array {
-		return CanvasKit.XYWHRect(this.x, this.y, this.width, this.height);
+	get display() {
+		return `position: (${this.x},${this.y}), size: (${this.width},${this.height})`;
 	}
 
-	toRRectXY(rx: number, ry: number): Float32Array {
-		return CanvasKit.RRectXY(this.toXYWHRect(), rx, ry);
+	toXYWHRect(): Float32Array {
+		return new Float32Array([this.x, this.y, this.x + this.width, this.y + this.height]);
+	}
+
+	copy(): Rect {
+		return new Rect(this.x, this.y, this.width, this.height);
+	}
+
+	offset(x: number, y: number): Rect {
+		this.x = this.x - x;
+		this.y = this.y - y;
+		return this;
+	}
+
+	toOffset(x: number, y: number) {
+		return this.copy().offset(x, y);
 	}
 }

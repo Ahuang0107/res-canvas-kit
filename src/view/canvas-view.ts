@@ -7,8 +7,8 @@ import invariant from 'ts-invariant';
 import { PageView } from './page/page-view';
 import { PageState } from './page/page-state';
 import { debounceTime } from 'rxjs/operators';
-import { BaseLayerView } from './base/base-layer-view';
 import { PointerController } from '../controller/poniter-controller';
+import Logger from '../logging/logger';
 
 export class CanvasView extends Disposable {
 	static currentContext: CanvasView;
@@ -20,7 +20,7 @@ export class CanvasView extends Disposable {
 	private readonly grContext: GrDirectContext;
 	private skSurface?: Surface;
 	private dpi = 1;
-	private frame = new Rect();
+	frame = new Rect();
 	private dirty = true;
 
 	protected constructor(private foreignEl: HTMLElement) {
@@ -63,22 +63,6 @@ export class CanvasView extends Disposable {
 		this.dirty = true;
 	}
 
-	selectLayer(layer: BaseLayerView | undefined) {
-		if (layer) {
-			this.pageState.selectLayer(layer);
-		} else {
-			this.pageState.selectLayer(undefined);
-		}
-	}
-
-	hoverLayer(layer: BaseLayerView | undefined) {
-		if (layer) {
-			this.pageState.hoverLayer(layer);
-		} else {
-			this.pageState.hoverLayer(undefined);
-		}
-	}
-
 	pushPage(page: PageView): number {
 		return this.pageViews.push(page);
 	}
@@ -117,7 +101,7 @@ export class CanvasView extends Disposable {
 				ro.observe(el);
 				return () => ro.disconnect();
 			})
-				.pipe(debounceTime(200))
+				.pipe(debounceTime(100))
 				.subscribe(() => {
 					this.doResize();
 				})
@@ -144,6 +128,7 @@ export class CanvasView extends Disposable {
 
 		canvasEl.width = canvasWidth;
 		canvasEl.height = canvasHeight;
+		this.markDirty();
 	}
 
 	private createSkSurfaceAndCanvas() {
@@ -176,7 +161,7 @@ export class CanvasView extends Disposable {
 			this.pageView?.render();
 			this.skCanvas.restore();
 			this.skSurface.flush();
-			console.log('>>> render costs:', Date.now() - start);
+			Logger.info('render', `costs: ${Date.now() - start}`);
 			this.dirty = this.pageView.autoDirty;
 		}
 	}
