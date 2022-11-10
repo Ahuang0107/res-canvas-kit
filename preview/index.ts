@@ -23,7 +23,7 @@ for (let x = 0; x < 384; x += 128) {
 }
 
 for (let x = 0; x < 384; x += 128) {
-	for (let y = 0; y < 960; y += 32) {
+	for (let y = -1920; y < 1920; y += 32) {
 		page.addXFixedViews([
 			new CellView(new Rect(x, y, 128, 32), {
 				text: 'Column Fix 固定列',
@@ -36,7 +36,7 @@ for (let x = 0; x < 384; x += 128) {
 	}
 }
 
-for (let x = 0; x < 1920; x += 96) {
+for (let x = -3840; x < 3840; x += 96) {
 	page.addYFixedViews([
 		new CellView(new Rect(x, 0, 96, 32), {
 			text: 'Row Fix 固定行',
@@ -48,8 +48,8 @@ for (let x = 0; x < 1920; x += 96) {
 	]);
 }
 
-for (let x = 0; x < 1920; x += 96) {
-	for (let y = 0; y < 960; y += 32) {
+for (let x = -3840; x < 3840; x += 96) {
+	for (let y = -1920; y < 1920; y += 32) {
 		page.addViews([
 			new CellView(new Rect(x, y, 96, 32), {
 				text: 'Data 数据' + Date.now(),
