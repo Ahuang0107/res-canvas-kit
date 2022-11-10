@@ -3,8 +3,11 @@
   "version": "0.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "preview": "vite ./preview --host --port=25150 --base=/canvas/",
+    "preview": "vite ./preview --port=25050",
     "build": "rimraf dist && tsc",
     "test": "vitest"
   },
