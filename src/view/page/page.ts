@@ -38,17 +38,28 @@ export class Page {
 
 	prebuild() {
 		const start = Date.now();
+		const { frame } = this.ctx;
+		const { position } = this.controller;
+		const childrenScreen = frame.toOffset(-position.x, -position.y);
 		this.views.forEach((view) => {
-			view.prebuild();
+			if (view.inScreen(childrenScreen)) {
+				view.prebuild();
+			}
 		});
 		this.fixedViews.forEach((view) => {
-			view.prebuild();
+			if (view.inScreen(childrenScreen)) {
+				view.prebuild();
+			}
 		});
 		this.xFixedViews.forEach((view) => {
-			view.prebuild();
+			if (view.inScreen(childrenScreen)) {
+				view.prebuild();
+			}
 		});
 		this.yFixedViews.forEach((view) => {
-			view.prebuild();
+			if (view.inScreen(childrenScreen)) {
+				view.prebuild();
+			}
 		});
 		info('page prebuild', `costs: ${Date.now() - start}`);
 	}
