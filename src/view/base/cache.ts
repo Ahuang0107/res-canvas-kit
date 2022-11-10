@@ -3,12 +3,12 @@ import { Point } from '../../base/point';
 import { Rect } from '../../base/rect';
 
 export type ComponentCaches = {
-	cache: DrawCache[];
+	cache?: DrawCache[];
 	hoverCache?: DrawCache[];
 	focusCache?: DrawCache[];
 };
 
-export type DrawCache = RectCache | ParaCache;
+export type DrawCache = RectCache | ParaCache | LineCache;
 
 abstract class Cache {
 	protected constructor(public frame: Rect) {}
@@ -33,6 +33,23 @@ export class ParaCache extends Cache {
 
 	draw(canvas: Canvas) {
 		const pos = this.frame.leftTop.add(this.pos);
+		this.para.layout(this.frame.width);
 		canvas.drawParagraph(this.para, pos.x, pos.y);
+	}
+}
+
+export class LineCache extends Cache {
+	constructor(frame: Rect, public paint: Paint) {
+		super(frame);
+	}
+
+	draw(canvas: Canvas) {
+		canvas.drawLine(
+			this.frame.left,
+			this.frame.top,
+			this.frame.right,
+			this.frame.bottom,
+			this.paint
+		);
 	}
 }

@@ -13,11 +13,11 @@ export interface ZoomOption {
 
 export class ZoomController extends Disposable {
 	changed$: Observable<unknown>;
-
+	option: ZoomOption = {};
 	private _scale$ = new BehaviorSubject<number>(1);
 	private _position$ = new BehaviorSubject<Point>(new Point(0, 0));
 
-	constructor(private view: CanvasView, private option?: ZoomOption) {
+	constructor(private view: CanvasView) {
 		super();
 		this.changed$ = merge(this._position$, this._scale$);
 		this._disposables.push(
@@ -37,19 +37,20 @@ export class ZoomController extends Disposable {
 	}
 
 	onOffset(offset: Point): void {
+		// nextPoint 指可见screen相对于origin的位置，screen向下移动时，nextPoint.y是负数
 		const nextPoint = this.position.minus(offset);
 		if (this.option) {
-			if (this.option.xMin) {
-				nextPoint.x = Math.min(nextPoint.x, this.option.xMin);
+			if (this.option.xMin != undefined && -nextPoint.x < this.option.xMin) {
+				nextPoint.x = -this.option.xMin;
 			}
-			if (this.option.xMax) {
-				nextPoint.x = Math.max(nextPoint.x, this.option.xMax);
+			if (this.option.xMax != undefined && -nextPoint.x > this.option.xMax) {
+				nextPoint.x = -this.option.xMax;
 			}
-			if (this.option.yMin) {
-				nextPoint.y = Math.min(nextPoint.y, this.option.yMin);
+			if (this.option.yMin != undefined && -nextPoint.y < this.option.yMin) {
+				nextPoint.y = -this.option.yMin;
 			}
-			if (this.option.yMax) {
-				nextPoint.y = Math.max(nextPoint.x, this.option.yMax);
+			if (this.option.yMax != undefined && -nextPoint.y > this.option.yMax) {
+				nextPoint.y = -this.option.yMax;
 			}
 		}
 		this._position$.next(nextPoint);

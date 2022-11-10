@@ -6,12 +6,15 @@ export class PageState {
 	focusLayerView?: BaseView;
 	hoverLayerView?: BaseView;
 	moveLayerView?: BaseView;
+	stretchLayerView?: BaseView;
+	stretchDirection?: boolean[] = [false, false];
 
 	focusChange = new Subject();
 	hoverChange = new Subject();
 	moveChange = new Subject();
+	stretchChange = new Subject();
 
-	changed = merge(this.focusChange, this.hoverChange, this.moveChange);
+	changed = merge(this.focusChange, this.hoverChange, this.moveChange, this.stretchChange);
 
 	reset() {
 		// todo 默认移动时之前的hover失效，但是focus不失效
@@ -23,11 +26,11 @@ export class PageState {
 	focusLayer(view: BaseView | undefined) {
 		if (this.focusLayerView?.id === view?.id) return;
 		if (this.focusLayerView) {
-			this.focusLayerView.z = 0;
+			this.focusLayerView.z = 10;
 		}
 		this.focusLayerView = view;
 		if (this.focusLayerView) {
-			this.focusLayerView.z = 1;
+			this.focusLayerView.z = 100;
 		}
 		this.focusChange.next();
 	}
@@ -42,8 +45,23 @@ export class PageState {
 		if (this.moveLayerView?.id === view?.id) return;
 		this.moveLayerView = view;
 		if (this.moveLayerView) {
-			this.moveLayerView.z = 1;
+			this.moveLayerView.z = 100;
 		}
 		this.moveChange.next();
+	}
+
+	/**
+	 *
+	 * @param view
+	 * @param directions true表示stretch的方向是left，false表示stretch的方向是right
+	 */
+	stretchLayer(view: BaseView | undefined, directions?: boolean[]) {
+		if (this.stretchLayerView?.id === view?.id) return;
+		this.stretchLayerView = view;
+		if (this.stretchLayerView) {
+			this.stretchLayerView.z = 100;
+		}
+		this.stretchDirection = directions;
+		this.stretchChange.next();
 	}
 }

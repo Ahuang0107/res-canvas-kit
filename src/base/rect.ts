@@ -49,7 +49,21 @@ export class Rect {
 	}
 
 	containsPoint(pt: Point): boolean {
-		return this.x <= pt.x && pt.x < this.right && this.y <= pt.y && pt.y < this.bottom;
+		return this.x <= pt.x && pt.x <= this.right && this.y <= pt.y && pt.y <= this.bottom;
+	}
+
+	intersect(another: Rect): boolean {
+		const startX1 = this.x,
+			startY1 = this.y,
+			endX1 = startX1 + this.width,
+			endY1 = startY1 + this.height;
+
+		const startX2 = another.x,
+			startY2 = another.y,
+			endX2 = startX2 + another.width,
+			endY2 = startY2 + another.height;
+
+		return !(endY2 < startY1 || endY1 < startY2 || startX1 > endX2 || startX2 > endX1);
 	}
 
 	toFloat32Array(): Float32Array {

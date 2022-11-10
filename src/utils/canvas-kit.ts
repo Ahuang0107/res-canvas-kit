@@ -23,8 +23,8 @@ export class CanvasKitUtil {
 	}
 
 	static async loadFont() {
-		await fetch(fontFZBlack).then((resp) => {
-			resp.arrayBuffer().then((buffer) => {
+		await fetch(fontFZBlack).then(async (resp) => {
+			await resp.arrayBuffer().then((buffer) => {
 				const fontMgr = CanvasKitUtil.CanvasKit.FontMgr.FromData(buffer);
 				invariant(fontMgr, 'fail to create fontMgr');
 				CanvasKitUtil.FontMgr = fontMgr;

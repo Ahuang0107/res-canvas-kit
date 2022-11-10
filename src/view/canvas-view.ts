@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Rect } from '../base/rect';
 import { Disposable } from '../base/disposable';
 import invariant from 'ts-invariant';
-import { Page } from './page/page';
+import { BasePage } from './page/base-page';
 import { PageState } from './page/page-state';
 import { debounceTime } from 'rxjs/operators';
 import { PointerController } from '../controller/poniter-controller';
@@ -14,8 +14,8 @@ export class CanvasView extends Disposable {
 	canvasEl$: BehaviorSubject<HTMLCanvasElement>;
 	skCanvas!: Canvas;
 	pageState = new PageState();
-	pages: Page[] = [];
-	currentPage?: Page;
+	pages: Map<string, BasePage> = new Map();
+	currentPageId = '';
 	frame = new Rect();
 	private readonly grContext: GrDirectContext;
 	private skSurface?: Surface;
@@ -40,12 +40,14 @@ export class CanvasView extends Disposable {
 		);
 	}
 
+	get currentPage(): BasePage | undefined {
+		return this.pages.get(this.currentPageId);
+	}
+
 	static async create(foreignEl: HTMLElement) {
 		await CanvasKitUtil.loadCanvasKit();
 		await CanvasKitUtil.loadFont();
-		const canvasView = new CanvasView(foreignEl);
-		canvasView.currentPage = new Page();
-		return canvasView;
+		return new CanvasView(foreignEl);
 	}
 
 	startTick() {
@@ -63,16 +65,40 @@ export class CanvasView extends Disposable {
 		this.dirty = true;
 	}
 
-	pushPage(page: Page): number {
-		return this.pages.push(page);
+	/**
+	 * 创建一个新的page，可以再调用selectPage来切换到新创建的page
+	 * @return 新创建的page的id
+	 */
+	addPage<T extends BasePage>(page: T): string {
+		this.pages.set(page.id, page);
+		return page.id;
 	}
 
-	selectPage(index: number) {
-		this.currentPage = this.pages[index];
+	/**
+	 * 切换到指定的page
+	 * @param id page的id，创建CanvasView时有一个默认page，可以用canvasView.currentPage.id拿到
+	 */
+	selectPage(id: string) {
+		if (!this.pages.has(id)) return;
+		this.currentPageId = id;
+		this.markDirty();
 	}
 
+	/**
+	 * 删除指定page，如果是当前page，则当前视图会消失
+	 * @param id
+	 */
+	deletePage(id: string) {
+		this.pages.delete(id);
+		this.markDirty();
+	}
+
+	/**
+	 * 清空所以page，当前page也会清空
+	 */
 	clearPage() {
-		this.pages = [];
+		this.pages.clear();
+		this.markDirty();
 	}
 
 	/**
@@ -164,8 +190,8 @@ export class CanvasView extends Disposable {
 			this.currentPage?.render();
 			this.skCanvas.restore();
 			this.skSurface.flush();
-			this.dirty = this.currentPage.autoDirty;
 		}
+		this.dirty = false;
 		info('total render', `costs: ${Date.now() - start}`);
 	}
 }
