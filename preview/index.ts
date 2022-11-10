@@ -6,6 +6,8 @@ canvasContainer.style.height = '100%';
 canvasContainer.style.position = 'relative';
 document.body.append(canvasContainer);
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const canvasView = await CanvasView.create(canvasContainer);
 
 const page = canvasView.currentPage;
