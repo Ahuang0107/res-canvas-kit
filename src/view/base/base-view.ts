@@ -15,20 +15,20 @@ export abstract class BaseView {
 		id++;
 	}
 
-	_caches?: ComponentCaches;
+	protected _caches?: ComponentCaches;
 
 	get caches() {
-		if (!this._caches) {
-			this._caches = this.build();
-		}
-		return this._caches;
+		this.prebuild();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._caches!;
 	}
 
-	flush() {
+	/**
+	 * 清除原来的caches，当paint信息有修改时调用
+	 */
+	clearCaches() {
 		this._caches = undefined;
 	}
-
-	abstract build(): ComponentCaches;
 
 	render() {
 		const { skCanvas } = this.ctx;
@@ -44,28 +44,9 @@ export abstract class BaseView {
 		skCanvas.restore();
 	}
 
-	/**
-	 * _render 是一定要实现的具体渲染方法
-	 */
-	abstract _render(): void;
-
-	/**
-	 * _hoverRender 是在hover状态下的渲染方法，默认与_render相同
-	 */
-	_hoverRender(): void {
-		this._render();
-	}
-
-	/**
-	 * _focusRender 是在选中状态下的渲染方法，默认与_render相同
-	 */
-	_focusRender(): void {
-		this._render();
-	}
-
 	containsPoint(pt: Point, offsetX?: number, offsetY?: number): boolean {
-		if (!this.ctx.pageView) return false;
-		const offset = this.ctx.pageView.transform.position;
+		if (!this.ctx.currentPage) return false;
+		const offset = this.ctx.currentPage.transform.position;
 		return this.frame.containsPoint(pt.minus(new Point(offsetX ?? offset.x, offsetY ?? offset.y)));
 	}
 
@@ -80,5 +61,42 @@ export abstract class BaseView {
 			result = result || screen.containsPoint(p);
 		});
 		return result;
+	}
+
+	/**
+	 * 预先创建caches信息
+	 */
+	prebuild() {
+		if (!this._caches) {
+			this._caches = this.build();
+		}
+	}
+
+	offset(x: number, y: number) {
+		// 这里因为cache直接使用的是frame的引用，所以只需要更新frame然后刷新就行了
+		this.frame.offset(x, y);
+	}
+
+	protected abstract build(): ComponentCaches;
+
+	protected _render(): void {
+		const { skCanvas } = this.ctx;
+		this.caches?.cache.forEach((cache) => {
+			cache.draw(skCanvas);
+		});
+	}
+
+	protected _hoverRender(): void {
+		const { skCanvas } = this.ctx;
+		(this.caches.hoverCache ?? this.caches.cache).forEach((cache) => {
+			cache.draw(skCanvas);
+		});
+	}
+
+	protected _focusRender(): void {
+		const { skCanvas } = this.ctx;
+		(this.caches.focusCache ?? this.caches.cache).forEach((cache) => {
+			cache.draw(skCanvas);
+		});
 	}
 }

@@ -5,29 +5,37 @@ import CanvasKitInit from '@skeditor/canvaskit-wasm/bin/canvaskit.js';
 // @ts-ignore
 import CanvasKitWasm from '@skeditor/canvaskit-wasm/bin/canvaskit.wasm?url';
 import { CanvasKit, FontMgr, Typeface } from '@skeditor/canvaskit-wasm';
-import Logger from '../logging/logger';
 import fontFZBlack from '../assets/fonts/FZBlack.ttf';
+import { info } from './logger';
+import invariant from 'ts-invariant';
 
-let CanvasKit: CanvasKit;
-let fontMgr: FontMgr | null;
-let typeface: Typeface | null;
+export class CanvasKitUtil {
+	static CanvasKit: CanvasKit;
+	static FontMgr: FontMgr;
+	static Typeface: Typeface;
 
-export const CanvasKitPromised = CanvasKitInit({ locateFile: () => CanvasKitWasm }).then(
-	(canvasKit: CanvasKit) => {
-		CanvasKit = canvasKit;
-		// todo 这里需要找一个字体是中英繁简都可以的
-		fetch(fontFZBlack).then((resp) => {
+	static async loadCanvasKit() {
+		const start = Date.now();
+		return await CanvasKitInit({ locateFile: () => CanvasKitWasm }).then((canvasKit: CanvasKit) => {
+			CanvasKitUtil.CanvasKit = canvasKit;
+			info('load', `load wasm and font costs: ${Date.now() - start}`);
+		});
+	}
+
+	static async loadFont() {
+		await fetch(fontFZBlack).then((resp) => {
 			resp.arrayBuffer().then((buffer) => {
-				fontMgr = CanvasKit.FontMgr.FromData(buffer);
-				typeface = CanvasKit.Typeface.MakeFreeTypeFaceFromData(buffer);
+				const fontMgr = CanvasKitUtil.CanvasKit.FontMgr.FromData(buffer);
+				invariant(fontMgr, 'fail to create fontMgr');
+				CanvasKitUtil.FontMgr = fontMgr;
+				const typeface = CanvasKitUtil.CanvasKit.Typeface.MakeFreeTypeFaceFromData(buffer);
+				invariant(typeface, 'fail to make typeface');
+				CanvasKitUtil.Typeface = typeface;
 				const count = fontMgr?.countFamilies() ?? 0;
 				for (let i = 0; i < count; i++) {
-					Logger.info('font', `loaded font ${fontMgr?.getFamilyName(i)}`);
+					info('font', `loaded font ${fontMgr?.getFamilyName(i)}`);
 				}
 			});
 		});
-		return canvasKit;
 	}
-);
-
-export { CanvasKit, fontMgr, typeface };
+}

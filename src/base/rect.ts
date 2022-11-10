@@ -44,15 +44,15 @@ export class Rect {
 		return new Point(this.x + this.width, this.y + this.height);
 	}
 
-	containsPoint(pt: Point): boolean {
-		return this.x <= pt.x && pt.x < this.right && this.y <= pt.y && pt.y < this.bottom;
-	}
-
 	get display() {
 		return `position: (${this.x},${this.y}), size: (${this.width},${this.height})`;
 	}
 
-	toXYWHRect(): Float32Array {
+	containsPoint(pt: Point): boolean {
+		return this.x <= pt.x && pt.x < this.right && this.y <= pt.y && pt.y < this.bottom;
+	}
+
+	toFloat32Array(): Float32Array {
 		return new Float32Array([this.x, this.y, this.x + this.width, this.y + this.height]);
 	}
 
@@ -61,8 +61,8 @@ export class Rect {
 	}
 
 	offset(x: number, y: number): Rect {
-		this.x = this.x - x;
-		this.y = this.y - y;
+		this.x = this.x + x;
+		this.y = this.y + y;
 		return this;
 	}
 

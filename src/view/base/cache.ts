@@ -1,5 +1,6 @@
-import { Canvas, Font, InputRect, Paint, Paragraph } from '@skeditor/canvaskit-wasm';
+import { Canvas, Paint, Paragraph } from '@skeditor/canvaskit-wasm';
 import { Point } from '../../base/point';
+import { Rect } from '../../base/rect';
 
 export type ComponentCaches = {
 	cache: DrawCache[];
@@ -7,48 +8,31 @@ export type ComponentCaches = {
 	focusCache?: DrawCache[];
 };
 
-export type DrawCache = RectCache | TextCache | ParaCache | LineCache;
+export type DrawCache = RectCache | ParaCache;
 
 abstract class Cache {
+	protected constructor(public frame: Rect) {}
+
 	abstract draw(canvas: Canvas): void;
 }
 
 export class RectCache extends Cache {
-	constructor(public rect: InputRect, public paint: Paint) {
-		super();
+	constructor(rect: Rect, public paint: Paint) {
+		super(rect);
 	}
 
 	draw(canvas: Canvas) {
-		canvas.drawRRect(this.rect, this.paint);
-	}
-}
-
-export class TextCache extends Cache {
-	constructor(public str: string, public pos: Point, public paint: Paint, public font: Font) {
-		super();
-	}
-
-	draw(canvas: Canvas) {
-		canvas.drawText(this.str, this.pos.x, this.pos.y, this.paint, this.font);
+		canvas.drawRect(this.frame.toFloat32Array(), this.paint);
 	}
 }
 
 export class ParaCache extends Cache {
-	constructor(public para: Paragraph, public pos: Point) {
-		super();
+	constructor(rect: Rect, public para: Paragraph, public pos: Point) {
+		super(rect);
 	}
 
 	draw(canvas: Canvas) {
-		canvas.drawParagraph(this.para, this.pos.x, this.pos.y);
-	}
-}
-
-export class LineCache extends Cache {
-	constructor(public start: Point, public end: Point, public paint: Paint) {
-		super();
-	}
-
-	draw(canvas: Canvas) {
-		canvas.drawLine(this.start.x, this.start.y, this.end.x, this.end.y, this.paint);
+		const pos = this.frame.leftTop.add(this.pos);
+		canvas.drawParagraph(this.para, pos.x, pos.y);
 	}
 }

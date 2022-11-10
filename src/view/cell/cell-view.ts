@@ -4,32 +4,16 @@ import { buildCell, CellConfig } from './cell-util';
 import { Rect } from '../../base/rect';
 
 export class CellView extends BaseView {
+	/**
+	 * CellView 主要用来渲染表格数据，经常会与数据模型有一对一的关系，因此数据更新时可以使用此model来关联更新视图
+	 */
+	model: never | undefined = undefined;
+
 	constructor(frame: Rect, private config: CellConfig) {
 		super(frame);
 	}
 
 	build(): ComponentCaches {
 		return buildCell(this.frame, this.config);
-	}
-
-	_render(): void {
-		const { skCanvas } = this.ctx;
-		this.caches?.cache.forEach((cache) => {
-			cache.draw(skCanvas);
-		});
-	}
-
-	_hoverRender(): void {
-		const { skCanvas } = this.ctx;
-		(this.caches.hoverCache ?? this.caches.cache).forEach((cache) => {
-			cache.draw(skCanvas);
-		});
-	}
-
-	_focusRender() {
-		const { skCanvas } = this.ctx;
-		(this.caches.focusCache ?? this.caches.cache).forEach((cache) => {
-			cache.draw(skCanvas);
-		});
 	}
 }

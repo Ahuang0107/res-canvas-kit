@@ -1,39 +1,67 @@
 import { Disposable } from '../base/disposable';
-import { IZoomListener } from './i-zoom-listener';
-import { fromEvent } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable } from 'rxjs';
 import bowser from 'bowser';
 import { Point } from '../base/point';
+import { CanvasView } from '../view/canvas-view';
+
+export interface ZoomOption {
+	xMin?: number;
+	xMax?: number;
+	yMin?: number;
+	yMax?: number;
+}
 
 export class ZoomController extends Disposable {
-	private offset = new Point();
+	changed$: Observable<unknown>;
 
-	constructor(private el: HTMLCanvasElement, private service: IZoomListener) {
+	private _scale$ = new BehaviorSubject<number>(1);
+	private _position$ = new BehaviorSubject<Point>(new Point(0, 0));
+
+	constructor(private view: CanvasView, private option?: ZoomOption) {
 		super();
-		this._disposables.push(fromEvent(this.el, 'wheel').subscribe(this.onWheel));
+		this.changed$ = merge(this._position$, this._scale$);
+		this._disposables.push(
+			this.changed$.subscribe(() => {
+				this.view.pageState.reset();
+				this.view.markDirty();
+			})
+		);
+		view.canvasEl$.subscribe((el) => {
+			// todo 创建新的page时，这里subscribe的event需要unsubscribe，不然event会call twice
+			this._disposables.push(fromEvent(el, 'wheel').subscribe(this.onWheel));
+		});
 	}
 
-	// todo 鼠标滚动时，也需要调整当前处于move状态的view
+	get position() {
+		return this._position$.value;
+	}
+
+	onOffset(offset: Point): void {
+		const nextPoint = this.position.minus(offset);
+		if (this.option) {
+			if (this.option.xMin) {
+				nextPoint.x = Math.min(nextPoint.x, this.option.xMin);
+			}
+			if (this.option.xMax) {
+				nextPoint.x = Math.max(nextPoint.x, this.option.xMax);
+			}
+			if (this.option.yMin) {
+				nextPoint.y = Math.min(nextPoint.y, this.option.yMin);
+			}
+			if (this.option.yMax) {
+				nextPoint.y = Math.max(nextPoint.x, this.option.yMax);
+			}
+		}
+		this._position$.next(nextPoint);
+	}
+
 	private onWheel = (_e: Event) => {
 		const e = _e as WheelEvent;
 
 		e.preventDefault();
-		if (e.ctrlKey || e.metaKey) {
-			const scaleMultiply = (100 - 1.5 * this.getScaleDelta(e)) / 100;
-			// this.service.onScale(scaleMultiply, new Point(e.offsetX - this.offset.x, e.offsetY - this.offset.x));
-		} else {
-			this.service.onOffset(this.getOffsetDelta(e));
-		}
+		const offset = this.getOffsetDelta(e);
+		this.onOffset(offset);
 	};
-
-	private getScaleDelta(e: WheelEvent): number {
-		if (e.deltaMode === 1) {
-			return e.deltaY * 15;
-		} else if (e.deltaY < 20 && e.deltaY > -20) {
-			return e.deltaY;
-		} else {
-			return Math.max(Math.min(e.deltaY, 20), -20);
-		}
-	}
 
 	private getOffsetDelta(e: WheelEvent): Point {
 		if (bowser.windows && e.shiftKey) {

@@ -1,6 +1,6 @@
 import { Disposable } from '../base/disposable';
 import invariant from 'ts-invariant';
-import { PageView } from '../view/page/page-view';
+import { Page } from '../view/page/page';
 import { Point } from '../base/point';
 import { fromEvent } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
@@ -9,6 +9,7 @@ import { BaseView } from '../view/base/base-view';
 
 export class PointerController extends Disposable {
 	lastMousePos: Point = new Point();
+
 	constructor(private view: CanvasView) {
 		super();
 
@@ -56,8 +57,7 @@ export class PointerController extends Disposable {
 		if (this.view.pageState.moveLayerView) {
 			const mousePos = new Point(event.offsetX, event.offsetY);
 			const offset = mousePos.compare(this.lastMousePos);
-			this.view.pageState.moveLayerView.frame.offset(-offset.x, -offset.y);
-			this.view.pageState.moveLayerView.flush();
+			this.view.pageState.moveLayerView.offset(offset.x, offset.y);
 			this.view.markDirty();
 		}
 		this.lastMousePos = new Point(event.offsetX, event.offsetY);
@@ -73,7 +73,7 @@ export class PointerController extends Disposable {
 
 		const targetView = this.findView(pt);
 
-		invariant(!(targetView instanceof PageView), 'Cant select page view. It should be undefined');
+		invariant(!(targetView instanceof Page), 'Cant select page view. It should be undefined');
 		return targetView;
 	}
 
@@ -81,7 +81,7 @@ export class PointerController extends Disposable {
 	 * @param pt 相对 canvas 的坐标
 	 */
 	findView(pt: Point): BaseView | undefined {
-		const pageView = this.view.pageView;
+		const pageView = this.view.currentPage;
 		if (!pageView) return;
 
 		// if (!pageView.containsPoint(pt)) return;
@@ -89,27 +89,27 @@ export class PointerController extends Disposable {
 		return this.findViewFirst(pageView, pt);
 	}
 
-	private findViewFirst(pageView: PageView, pt: Point): BaseView | undefined {
-		for (let i = pageView.absoluteChildren.length - 1; i >= 0; i--) {
-			const layer = pageView.absoluteChildren[i];
+	private findViewFirst(pageView: Page, pt: Point): BaseView | undefined {
+		for (let i = pageView.fixedViews.length - 1; i >= 0; i--) {
+			const layer = pageView.fixedViews[i];
 			if (layer.containsPoint(pt, 0, 0)) {
 				return layer;
 			}
 		}
-		for (let i = pageView.xAbsoluteChildren.length - 1; i >= 0; i--) {
-			const layer = pageView.xAbsoluteChildren[i];
+		for (let i = pageView.xFixedViews.length - 1; i >= 0; i--) {
+			const layer = pageView.xFixedViews[i];
 			if (layer.containsPoint(pt, 0)) {
 				return layer;
 			}
 		}
-		for (let i = pageView.yAbsoluteChildren.length - 1; i >= 0; i--) {
-			const layer = pageView.yAbsoluteChildren[i];
+		for (let i = pageView.yFixedViews.length - 1; i >= 0; i--) {
+			const layer = pageView.yFixedViews[i];
 			if (layer.containsPoint(pt, undefined, 0)) {
 				return layer;
 			}
 		}
-		for (let i = pageView.children.length - 1; i >= 0; i--) {
-			const layer = pageView.children[i];
+		for (let i = pageView.views.length - 1; i >= 0; i--) {
+			const layer = pageView.views[i];
 			if (layer.containsPoint(pt)) {
 				return layer;
 			}

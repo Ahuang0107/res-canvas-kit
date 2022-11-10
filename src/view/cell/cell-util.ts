@@ -1,8 +1,8 @@
 import { Rect } from '../../base/rect';
 import { Color } from '@skeditor/canvaskit-wasm';
-import { CanvasKit, fontMgr } from '../../utils';
 import { ComponentCaches, DrawCache, ParaCache, RectCache } from '../base/cache';
 import { Point } from '../../base/point';
+import { CanvasKitUtil } from '../../utils';
 
 export type CellConfig = {
 	text?: string;
@@ -21,39 +21,39 @@ type CellStyle = {
 export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 	const { text, textSize = 12, style, hoverStyle, focusStyle } = config;
 
-	const { fillColor, strokeColor, textColor = CanvasKit.BLACK } = style;
+	const { fillColor, strokeColor, textColor = CanvasKitUtil.CanvasKit.BLACK } = style;
 	const cache: DrawCache[] = [];
 
 	// todo 这里只是设置一个颜色的paint的话，不需要每次创建这个对象
 	if (fillColor) {
-		const fillPaint = new CanvasKit.Paint();
+		const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
 		fillPaint.setColor(fillColor);
-		cache.push(new RectCache(frame.toXYWHRect(), fillPaint));
+		cache.push(new RectCache(frame, fillPaint));
 	}
 
 	if (strokeColor) {
-		const strokePaint = new CanvasKit.Paint();
+		const strokePaint = new CanvasKitUtil.CanvasKit.Paint();
 		strokePaint.setColor(strokeColor);
-		strokePaint.setStyle(CanvasKit.PaintStyle.Stroke);
+		strokePaint.setStyle(CanvasKitUtil.CanvasKit.PaintStyle.Stroke);
 		strokePaint.setStrokeWidth(1);
-		cache.push(new RectCache(frame.toXYWHRect(), strokePaint));
+		cache.push(new RectCache(frame, strokePaint));
 	}
 
 	if (text) {
-		const paraStyle = new CanvasKit.ParagraphStyle({
+		const paraStyle = new CanvasKitUtil.CanvasKit.ParagraphStyle({
 			textStyle: {
 				color: textColor,
 				fontSize: textSize
 			},
-			textAlign: CanvasKit.TextAlign.Center,
+			textAlign: CanvasKitUtil.CanvasKit.TextAlign.Center,
 			maxLines: 1,
 			ellipsis: '...'
 		});
-		const builder = CanvasKit.ParagraphBuilder.Make(paraStyle, fontMgr!);
+		const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(paraStyle, CanvasKitUtil.FontMgr);
 		builder.addText(text);
 		const para = builder.build();
 		para.layout(frame.width);
-		cache.push(new ParaCache(para, frame.leftTop.add(new Point(0, (frame.height - textSize) / 2))));
+		cache.push(new ParaCache(frame, para, new Point(0, (frame.height - textSize) / 2)));
 		builder.delete();
 	}
 
@@ -66,36 +66,37 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 			textColor: hoverTextColor = textColor
 		} = hoverStyle;
 		if (hoverFillColor) {
-			const fillPaint = new CanvasKit.Paint();
+			const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
 			fillPaint.setColor(hoverFillColor);
-			hoverCache.push(new RectCache(frame.toXYWHRect(), fillPaint));
+			hoverCache.push(new RectCache(frame, fillPaint));
 		}
 
 		if (hoverStrokeColor) {
-			const strokePaint = new CanvasKit.Paint();
+			const strokePaint = new CanvasKitUtil.CanvasKit.Paint();
 			strokePaint.setColor(hoverStrokeColor);
-			strokePaint.setStyle(CanvasKit.PaintStyle.Stroke);
+			strokePaint.setStyle(CanvasKitUtil.CanvasKit.PaintStyle.Stroke);
 			strokePaint.setStrokeWidth(1);
-			hoverCache.push(new RectCache(frame.toXYWHRect(), strokePaint));
+			hoverCache.push(new RectCache(frame, strokePaint));
 		}
 
 		if (text) {
-			const paraStyle = new CanvasKit.ParagraphStyle({
+			const paraStyle = new CanvasKitUtil.CanvasKit.ParagraphStyle({
 				textStyle: {
 					color: hoverTextColor,
 					fontSize: textSize
 				},
-				textAlign: CanvasKit.TextAlign.Center,
+				textAlign: CanvasKitUtil.CanvasKit.TextAlign.Center,
 				maxLines: 1,
 				ellipsis: '...'
 			});
-			const builder = CanvasKit.ParagraphBuilder.Make(paraStyle, fontMgr!);
+			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
+				paraStyle,
+				CanvasKitUtil.FontMgr
+			);
 			builder.addText(text);
 			const para = builder.build();
 			para.layout(frame.width);
-			hoverCache.push(
-				new ParaCache(para, frame.leftTop.add(new Point(0, (frame.height - textSize) / 2)))
-			);
+			hoverCache.push(new ParaCache(frame, para, new Point(0, (frame.height - textSize) / 2)));
 			builder.delete();
 		}
 	}
@@ -110,36 +111,37 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 			textColor: focusTextColor = textColor
 		} = focusStyle;
 		if (focusFillColor) {
-			const fillPaint = new CanvasKit.Paint();
+			const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
 			fillPaint.setColor(focusFillColor);
-			focusCache.push(new RectCache(frame.toXYWHRect(), fillPaint));
+			focusCache.push(new RectCache(frame, fillPaint));
 		}
 
 		if (focusStrokeColor) {
-			const strokePaint = new CanvasKit.Paint();
+			const strokePaint = new CanvasKitUtil.CanvasKit.Paint();
 			strokePaint.setColor(focusStrokeColor);
-			strokePaint.setStyle(CanvasKit.PaintStyle.Stroke);
+			strokePaint.setStyle(CanvasKitUtil.CanvasKit.PaintStyle.Stroke);
 			strokePaint.setStrokeWidth(1);
-			focusCache.push(new RectCache(frame.toXYWHRect(), strokePaint));
+			focusCache.push(new RectCache(frame, strokePaint));
 		}
 
 		if (text) {
-			const paraStyle = new CanvasKit.ParagraphStyle({
+			const paraStyle = new CanvasKitUtil.CanvasKit.ParagraphStyle({
 				textStyle: {
 					color: focusTextColor,
 					fontSize: textSize
 				},
-				textAlign: CanvasKit.TextAlign.Center,
+				textAlign: CanvasKitUtil.CanvasKit.TextAlign.Center,
 				maxLines: 1,
 				ellipsis: '...'
 			});
-			const builder = CanvasKit.ParagraphBuilder.Make(paraStyle, fontMgr!);
+			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
+				paraStyle,
+				CanvasKitUtil.FontMgr
+			);
 			builder.addText(text);
 			const para = builder.build();
 			para.layout(frame.width);
-			focusCache.push(
-				new ParaCache(para, frame.leftTop.add(new Point(0, (frame.height - textSize) / 2)))
-			);
+			focusCache.push(new ParaCache(frame, para, new Point(0, (frame.height - textSize) / 2)));
 			builder.delete();
 		}
 	}
