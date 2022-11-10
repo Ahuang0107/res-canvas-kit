@@ -9,8 +9,8 @@ export class CellView extends BaseView {
 	 */
 	model: never | undefined = undefined;
 
-	constructor(frame: Rect, private config: CellConfig) {
-		super(frame);
+	constructor(frame: Rect, private config: CellConfig, z?: number) {
+		super(frame, z);
 	}
 
 	build(): ComponentCaches {

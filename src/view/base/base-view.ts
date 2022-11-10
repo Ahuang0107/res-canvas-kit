@@ -9,7 +9,7 @@ export abstract class BaseView {
 	id: string;
 	ctx: CanvasView;
 
-	protected constructor(public frame: Rect) {
+	protected constructor(public frame: Rect, public z: number = 0) {
 		this.ctx = CanvasView.currentContext;
 		this.id = id.toString();
 		id++;

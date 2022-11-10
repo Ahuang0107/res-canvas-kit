@@ -11,3 +11,5 @@ camera移动实际上是在绘制时canvas调用concat修改matrix，所以目�
 
 1. BaseView增加z轴参数，绘制时先distinct出所有z轴值，按照顺序去渲染对应view
 2. 增加GroupView，将目前平级的view修改成tree的结构
+
+使用了增加Z轴的方法，因为对于比较分散的table cell数据，group结构的意义不大

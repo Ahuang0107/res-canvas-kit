@@ -22,7 +22,13 @@ export class PageState {
 
 	focusLayer(view: BaseView | undefined) {
 		if (this.focusLayerView?.id === view?.id) return;
+		if (this.focusLayerView) {
+			this.focusLayerView.z = 0;
+		}
 		this.focusLayerView = view;
+		if (this.focusLayerView) {
+			this.focusLayerView.z = 1;
+		}
 		this.focusChange.next();
 	}
 
@@ -35,6 +41,9 @@ export class PageState {
 	moveLayer(view: BaseView | undefined) {
 		if (this.moveLayerView?.id === view?.id) return;
 		this.moveLayerView = view;
+		if (this.moveLayerView) {
+			this.moveLayerView.z = 1;
+		}
 		this.moveChange.next();
 	}
 }

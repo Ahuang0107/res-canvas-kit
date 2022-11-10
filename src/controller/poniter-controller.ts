@@ -90,30 +90,50 @@ export class PointerController extends Disposable {
 	}
 
 	private findViewFirst(pageView: Page, pt: Point): BaseView | undefined {
+		const hoverViews = [];
+		let maxZ = 0;
+		let hoverView = undefined;
 		for (let i = pageView.fixedViews.length - 1; i >= 0; i--) {
 			const layer = pageView.fixedViews[i];
 			if (layer.containsPoint(pt, 0, 0)) {
-				return layer;
+				maxZ = Math.max(maxZ, layer.z);
+				hoverViews.push(layer);
 			}
+		}
+		hoverView = hoverViews.find((v) => v.z == maxZ);
+		if (hoverView) {
+			return hoverView;
 		}
 		for (let i = pageView.xFixedViews.length - 1; i >= 0; i--) {
 			const layer = pageView.xFixedViews[i];
 			if (layer.containsPoint(pt, 0)) {
-				return layer;
+				maxZ = Math.max(maxZ, layer.z);
+				hoverViews.push(layer);
 			}
+		}
+		hoverView = hoverViews.find((v) => v.z == maxZ);
+		if (hoverView) {
+			return hoverView;
 		}
 		for (let i = pageView.yFixedViews.length - 1; i >= 0; i--) {
 			const layer = pageView.yFixedViews[i];
 			if (layer.containsPoint(pt, undefined, 0)) {
-				return layer;
+				maxZ = Math.max(maxZ, layer.z);
+				hoverViews.push(layer);
 			}
+		}
+		hoverView = hoverViews.find((v) => v.z == maxZ);
+		if (hoverView) {
+			return hoverView;
 		}
 		for (let i = pageView.views.length - 1; i >= 0; i--) {
 			const layer = pageView.views[i];
 			if (layer.containsPoint(pt)) {
-				return layer;
+				maxZ = Math.max(maxZ, layer.z);
+				hoverViews.push(layer);
 			}
 		}
-		return undefined;
+		hoverView = hoverViews.find((v) => v.z == maxZ);
+		return hoverView;
 	}
 }

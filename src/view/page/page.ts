@@ -66,10 +66,16 @@ export class Page {
 		this.transform.updateLocalTransform();
 		skCanvas.concat(this.transform.localTransform.toArray(false));
 		const childrenScreen = frame.toOffset(-position.x, -position.y);
+		const viewMap = new Map<number, BaseView[]>();
 		this.views.forEach((child) => {
 			if (child.inScreen(childrenScreen)) {
-				child.render();
+				viewMap.set(child.z, [...(viewMap.get(child.z) ?? []), child]);
 			}
+		});
+		viewMap.forEach((v, k) => {
+			v.forEach((child) => {
+				child.render();
+			});
 		});
 		skCanvas.restoreToCount(saveCount);
 
