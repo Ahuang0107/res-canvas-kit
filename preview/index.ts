@@ -17,9 +17,9 @@ const canvasView = await CanvasView.create(canvasContainer);
 canvasView.loading = true;
 canvasView.startTick();
 
-setTimeout(() => {
-	canvasView.loading = false;
-}, 5000);
+// setTimeout(() => {
+// 	canvasView.loading = false;
+// }, 5000);
 
 canvasView.selectPage(canvasView.addPage(CellPage.default()));
 const page = canvasView.currentPage;
@@ -32,6 +32,8 @@ const columnNum = 480;
 if (page && page instanceof CellPage) {
 	page.controller.option.yMin = 0;
 	page.controller.option.yMax = (rowNum - 3) * rowHeight;
+	page.controller.option.xMin = (-columnNum / 2) * columnWidth;
+	page.controller.option.xMax = (columnNum / 2 - 42) * columnWidth;
 	page.addFixedViews([
 		CellView.from(
 			0,
@@ -290,5 +292,9 @@ if (page && page instanceof CellPage) {
 			}
 		}
 	}
-	page.prebuild(true);
+	// todo 一次性把所有的view都prebuild掉会有很长一段的页面空白期，
+	//  同时loading的动画也是无法加载的，除非将loading动画放到这块canvas之外加载
+	// 基本render的cost在60ms之内都是可以接受的
+	// page.prebuild(true);
+	canvasView.loading = false;
 }
