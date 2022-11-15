@@ -13,10 +13,13 @@ canvasContainer.style.height = '100%';
 canvasContainer.style.position = 'relative';
 document.body.append(canvasContainer);
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 const canvasView = await CanvasView.create(canvasContainer);
+canvasView.loading = true;
 canvasView.startTick();
+
+setTimeout(() => {
+	canvasView.loading = false;
+}, 5000);
 
 canvasView.selectPage(canvasView.addPage(CellPage.default()));
 const page = canvasView.currentPage;

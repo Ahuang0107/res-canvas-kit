@@ -8,6 +8,7 @@ import { BasePage } from './page/base-page';
 import { PageState } from './page/page-state';
 import { debounceTime } from 'rxjs/operators';
 import { PointerController } from '../controller/poniter-controller';
+import { AnimaView } from './base/anima-view';
 
 export class CanvasView extends Disposable {
 	static currentContext: CanvasView;
@@ -17,10 +18,12 @@ export class CanvasView extends Disposable {
 	pages: Map<string, BasePage> = new Map();
 	currentPageId = '';
 	frame = new Rect();
+	loading = false;
 	private readonly grContext: GrDirectContext;
 	private skSurface?: Surface;
 	private dpi = 1;
 	private dirty = true;
+	private loadingView: AnimaView;
 
 	protected constructor(private foreignEl: HTMLElement) {
 		super();
@@ -38,6 +41,8 @@ export class CanvasView extends Disposable {
 
 			new PointerController(this)
 		);
+
+		this.loadingView = AnimaView.new();
 	}
 
 	get currentPage(): BasePage | undefined {
@@ -53,7 +58,11 @@ export class CanvasView extends Disposable {
 	startTick() {
 		const handler = () => {
 			if (this._disposed) return;
-			this.render();
+			if (this.loading) {
+				this.loadingRender();
+			} else {
+				this.render();
+			}
 			// requestAnimationFrame(handler);
 			setTimeout(handler, 16);
 		};
@@ -193,5 +202,23 @@ export class CanvasView extends Disposable {
 		}
 		this.dirty = false;
 		info('total render', `costs: ${Date.now() - start}`);
+	}
+
+	// todo 从loading状态切换到非loading状态时，会有一段时间loading动画无法继续加载，
+	//  同时page view也还在加载，此时画面看上去是卡住的，这里该如何解决呢？
+	//  创建一个新的<canvas/>来渲染page view，渲染完后再把原来的<canvas/>替换掉？
+	private loadingRender() {
+		if (!this.loading) return;
+		const start = Date.now();
+		this.createSkSurfaceAndCanvas();
+		if (!this.skSurface) return;
+		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
+		this.skCanvas.save();
+		this.skCanvas.scale(this.dpi, this.dpi);
+		this.loadingView.resize();
+		this.loadingView.render();
+		this.skCanvas.restore();
+		this.skSurface.flush();
+		info('anima render', `costs: ${Date.now() - start}`);
 	}
 }

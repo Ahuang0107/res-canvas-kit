@@ -1,6 +1,7 @@
-import { Canvas, Paint, Paragraph } from '@skeditor/canvaskit-wasm';
+import { Canvas, Paint, Paragraph, SkottieAnimation } from '@skeditor/canvaskit-wasm';
 import { Point } from '../../base/point';
 import { Rect } from '../../base/rect';
+import { CanvasKitUtil } from '../../utils';
 
 export type ComponentCaches = {
 	cache?: DrawCache[];
@@ -8,7 +9,7 @@ export type ComponentCaches = {
 	focusCache?: DrawCache[];
 };
 
-export type DrawCache = RectCache | ParaCache | LineCache;
+export type DrawCache = RectCache | ParaCache | LineCache | AnimaCache;
 
 abstract class Cache {
 	protected constructor(public frame: Rect) {}
@@ -51,5 +52,23 @@ export class LineCache extends Cache {
 			this.frame.bottom,
 			this.paint
 		);
+	}
+}
+
+export class AnimaCache extends Cache {
+	animation: SkottieAnimation;
+	firstFrame: number;
+
+	constructor(frame: Rect, json: never) {
+		super(frame);
+		this.animation = CanvasKitUtil.CanvasKit.MakeAnimation(JSON.stringify(json));
+		this.firstFrame = new Date().getTime();
+	}
+
+	draw(canvas: Canvas): void {
+		const now = new Date().getTime();
+		const seek = ((now - this.firstFrame) / (this.animation.duration() * 1000)) % 1;
+		this.animation.seek(seek);
+		this.animation.render(canvas, this.frame.toFloat32Array());
 	}
 }
