@@ -1,4 +1,10 @@
-import { Canvas, Paint, Paragraph, SkottieAnimation } from '@skeditor/canvaskit-wasm';
+import {
+	Canvas,
+	Paint,
+	Paragraph,
+	ParagraphStyle,
+	SkottieAnimation
+} from '@skeditor/canvaskit-wasm';
 import { Point } from '../../base/point';
 import { Rect } from '../../base/rect';
 import { CanvasKitUtil } from '../../utils';
@@ -27,15 +33,54 @@ export class RectCache extends Cache {
 	}
 }
 
+/**
+ * 因为创建太多Paragraph会超过WASM的MAXIMUM_MEMORY，默认是2G
+ * 虽然可以增加但是目前先用不增加的解决方案
+ * 将ParaCache修改为实时创建ParagraphBuilder和Paragraph，绘制完delete对象，防止内存溢出
+ * 但是渲染效率会降低
+ * perf设置为true则是依旧使用存储Paragraph的逻辑，提高了绘制效率
+ */
 export class ParaCache extends Cache {
-	constructor(rect: Rect, public para: Paragraph, public pos: Point) {
+	_para?: Paragraph;
+
+	constructor(
+		rect: Rect,
+		public text: string,
+		public paraStyle: ParagraphStyle,
+		public pos: Point,
+		perf = false
+	) {
 		super(rect);
+		if (perf) {
+			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
+				this.paraStyle,
+				CanvasKitUtil.FontMgr
+			);
+			builder.addText(this.text);
+			const para = builder.build();
+			para.layout(this.frame.width);
+			this._para = para;
+			builder.delete();
+		}
 	}
 
 	draw(canvas: Canvas) {
 		const pos = this.frame.leftTop.add(this.pos);
-		this.para.layout(this.frame.width);
-		canvas.drawParagraph(this.para, pos.x, pos.y);
+		if (this._para) {
+			this._para.layout(this.frame.width);
+			canvas.drawParagraph(this._para, pos.x, pos.y);
+		} else {
+			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
+				this.paraStyle,
+				CanvasKitUtil.FontMgr
+			);
+			builder.addText(this.text);
+			const para = builder.build();
+			para.layout(this.frame.width);
+			canvas.drawParagraph(para, pos.x, pos.y);
+			builder.delete();
+			para.delete();
+		}
 	}
 }
 

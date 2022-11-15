@@ -50,15 +50,9 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 				maxLines: 1,
 				ellipsis: '...'
 			});
-			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
-				paraStyle,
-				CanvasKitUtil.FontMgr
+			cache.push(
+				new ParaCache(frame, text, paraStyle, new Point(0, (frame.height - textSize) / 2))
 			);
-			builder.addText(text);
-			const para = builder.build();
-			para.layout(frame.width);
-			cache.push(new ParaCache(frame, para, new Point(0, (frame.height - textSize) / 2)));
-			builder.delete();
 		}
 	}
 
@@ -94,15 +88,9 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 				maxLines: 1,
 				ellipsis: '...'
 			});
-			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
-				paraStyle,
-				CanvasKitUtil.FontMgr
+			hoverCache.push(
+				new ParaCache(frame, text, paraStyle, new Point(0, (frame.height - textSize) / 2))
 			);
-			builder.addText(text);
-			const para = builder.build();
-			para.layout(frame.width);
-			hoverCache.push(new ParaCache(frame, para, new Point(0, (frame.height - textSize) / 2)));
-			builder.delete();
 		}
 	}
 
@@ -139,15 +127,9 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 				maxLines: 1,
 				ellipsis: '...'
 			});
-			const builder = CanvasKitUtil.CanvasKit.ParagraphBuilder.Make(
-				paraStyle,
-				CanvasKitUtil.FontMgr
+			focusCache.push(
+				new ParaCache(frame, text, paraStyle, new Point(0, (frame.height - textSize) / 2))
 			);
-			builder.addText(text);
-			const para = builder.build();
-			para.layout(frame.width);
-			focusCache.push(new ParaCache(frame, para, new Point(0, (frame.height - textSize) / 2)));
-			builder.delete();
 		}
 	}
 
