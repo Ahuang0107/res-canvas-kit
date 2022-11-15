@@ -24,15 +24,20 @@ setTimeout(() => {
 canvasView.selectPage(canvasView.addPage(CellPage.default()));
 const page = canvasView.currentPage;
 
+const rowHeight = 24;
+const rowNum = 240;
+const columnWidth = 32;
+const columnNum = 480;
+
 if (page && page instanceof CellPage) {
 	page.controller.option.yMin = 0;
-	page.controller.option.yMax = 1920 - 96;
+	page.controller.option.yMax = (rowNum - 3) * rowHeight;
 	page.addFixedViews([
 		CellView.from(
 			0,
 			0,
 			352,
-			64,
+			rowHeight * 2,
 			{
 				style: {
 					fillColor: CanvasKitUtil.CanvasKit.Color(217, 217, 217),
@@ -45,9 +50,9 @@ if (page && page instanceof CellPage) {
 	page.addFixedViews([
 		CellView.from(
 			0,
-			32,
+			rowHeight,
 			160,
-			32,
+			rowHeight,
 			{
 				text: 'Resource Name',
 				style: {
@@ -61,9 +66,9 @@ if (page && page instanceof CellPage) {
 	page.addFixedViews([
 		CellView.from(
 			160,
-			32,
+			rowHeight,
 			96,
-			32,
+			rowHeight,
 			{
 				text: 'Business Unit',
 				style: {
@@ -77,9 +82,9 @@ if (page && page instanceof CellPage) {
 	page.addFixedViews([
 		CellView.from(
 			256,
-			32,
+			rowHeight,
 			96,
-			32,
+			rowHeight,
 			{
 				text: 'Operating Unit',
 				style: {
@@ -91,13 +96,14 @@ if (page && page instanceof CellPage) {
 		)
 	]);
 
-	for (let y = 0; y < 1920; y += 32) {
+	for (let rowIndex = 0; rowIndex < rowNum; rowIndex += 1) {
+		const y = rowIndex * rowHeight;
 		page.addXFixedViews([
 			CellView.from(
 				0,
 				y,
 				160,
-				32,
+				rowHeight,
 				{
 					text: [
 						'Kira Fowler',
@@ -122,7 +128,7 @@ if (page && page instanceof CellPage) {
 				160,
 				y,
 				96,
-				32,
+				rowHeight,
 				{
 					text: [
 						'Hangzhou',
@@ -147,7 +153,7 @@ if (page && page instanceof CellPage) {
 				256,
 				y,
 				96,
-				32,
+				rowHeight,
 				{
 					text: ['Assurance', 'CBS', 'Team 1', 'Team 2', 'Team 3', 'Team 4', 'Team 5', 'Team 6'][
 						Math.round((Math.random() * 10) % 7)
@@ -162,14 +168,15 @@ if (page && page instanceof CellPage) {
 		]);
 	}
 
-	for (let x = -3840; x < 3840; x += 32) {
-		if (x % 224 === 0) {
+	for (let columnIndex = -columnNum / 2; columnIndex < columnNum / 2; columnIndex += 1) {
+		const x = columnIndex * columnWidth;
+		if (columnIndex % 7 === 0) {
 			page.addYFixedViews([
 				CellView.from(
 					x,
 					0,
-					224,
-					32,
+					columnWidth * 7,
+					rowHeight,
 					{
 						text: 'Dec 2022',
 						style: {
@@ -184,9 +191,9 @@ if (page && page instanceof CellPage) {
 		page.addYFixedViews([
 			CellView.from(
 				x,
-				32,
-				32,
-				32,
+				rowHeight,
+				columnWidth,
+				rowHeight,
 				{
 					text: ['Sun.', 'Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fir.', 'Sat.'][
 						Math.round((Math.random() * 10) % 6)
@@ -201,19 +208,21 @@ if (page && page instanceof CellPage) {
 		]);
 	}
 
-	for (let x = -3840; x < 3840; x += 32) {
+	for (let columnIndex = -columnNum / 2; columnIndex < columnNum / 2; columnIndex += 1) {
+		const x = columnIndex * columnWidth;
 		let bgColor = CanvasKitUtil.CanvasKit.WHITE;
-		if (x % 224 === 0 || x % 224 === 32) {
+		if (columnIndex % 7 === 0 || columnIndex % 7 === 1) {
 			bgColor = CanvasKitUtil.CanvasKit.Color(221, 221, 221);
 		}
-		for (let y = 0; y < 1920; y += 32) {
+		for (let rowIndex = 0; rowIndex < rowNum; rowIndex += 1) {
+			const y = rowIndex * rowHeight;
 			// 这里添加的是表格的所有空格子，将z轴设为1
 			page.addViews([
 				CellView.from(
 					x,
 					y,
 					32,
-					32,
+					rowHeight,
 					{
 						style: {
 							fillColor: bgColor,
@@ -234,8 +243,9 @@ if (page && page instanceof CellPage) {
 				)
 			]);
 		}
-		if (x % 224 === 0) {
-			for (let y = 0; y < 1920; y += 32) {
+		if (columnIndex % 7 === 0) {
+			for (let rowIndex = 0; rowIndex < rowNum; rowIndex += 1) {
+				const y = rowIndex * rowHeight;
 				// 这里添加的是booking的格子，将z轴设为10
 				const random = Math.round((Math.random() * 10) % 6);
 				page.addViews([
@@ -243,7 +253,7 @@ if (page && page instanceof CellPage) {
 						x + 32 * random,
 						y,
 						32 * Math.max(Math.round((Math.random() * 10) % 8) - random, 3),
-						32,
+						rowHeight,
 						{
 							text: [
 								'AUD2022-12 LT Suzhou',
@@ -280,4 +290,5 @@ if (page && page instanceof CellPage) {
 			}
 		}
 	}
+	page.prebuild(true);
 }

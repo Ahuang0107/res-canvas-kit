@@ -41,32 +41,32 @@ export class CellPage extends BasePage {
 		this.yFixedViews.push(...views);
 	}
 
-	prebuild() {
+	prebuild(all = false) {
 		const start = Date.now();
 		const { frame } = this.ctx;
 		const { position } = this.controller;
 		const childrenScreen = frame.toOffset(-position.x, -position.y);
 		let viewInScreenNum = 0;
 		this.views.forEach((view) => {
-			if (view.inScreen(childrenScreen)) {
+			if (all || view.inScreen(childrenScreen)) {
 				view.prebuild();
 				viewInScreenNum++;
 			}
 		});
 		this.fixedViews.forEach((view) => {
-			if (view.inScreen(childrenScreen)) {
+			if (all || view.inScreen(childrenScreen)) {
 				view.prebuild();
 				viewInScreenNum++;
 			}
 		});
 		this.xFixedViews.forEach((view) => {
-			if (view.inScreen(childrenScreen)) {
+			if (all || view.inScreen(childrenScreen)) {
 				view.prebuild();
 				viewInScreenNum++;
 			}
 		});
 		this.yFixedViews.forEach((view) => {
-			if (view.inScreen(childrenScreen)) {
+			if (all || view.inScreen(childrenScreen)) {
 				view.prebuild();
 				viewInScreenNum++;
 			}
