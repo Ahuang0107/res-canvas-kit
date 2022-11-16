@@ -5,8 +5,9 @@ import { StretchDirection } from '../base/stretch-direction';
 export class PageState {
 	focusingViews: BaseView[] = [];
 	hoverView?: BaseView;
-	moveView?: BaseView;
-	stretchView?: BaseView;
+	// true 表示正在move view
+	moving = false;
+	// 不为undefined 表示正在stretch view
 	stretchDirection?: StretchDirection;
 
 	focusChange = new Subject();
@@ -17,10 +18,7 @@ export class PageState {
 	changed = merge(this.focusChange, this.hoverChange, this.moveChange, this.stretchChange);
 
 	reset() {
-		// todo 默认移动时之前的hover失效，但是focus不失效
-		// this.focusLayer(undefined);
 		this.hoverLayer(undefined);
-		// this.moveLayer(undefined);
 	}
 
 	focusView(view: BaseView | undefined, add = false) {
@@ -49,17 +47,12 @@ export class PageState {
 		this.hoverChange.next();
 	}
 
-	// todo focus和move/stretch等交互元素应该是保持一致的，当发生move/stretch事件时
-	//  实际上target就应该是当前focus的若干个view
-	moveLayer(view: BaseView | undefined) {
-		if (this.moveView?.id === view?.id) return;
-		this.moveView = view;
+	moveLayer(moving: boolean) {
+		this.moving = moving;
 		this.moveChange.next();
 	}
 
-	stretchLayer(view: BaseView | undefined, directions?: StretchDirection) {
-		if (this.stretchView?.id === view?.id) return;
-		this.stretchView = view;
+	stretchLayer(directions?: StretchDirection) {
 		this.stretchDirection = directions;
 		this.stretchChange.next();
 	}

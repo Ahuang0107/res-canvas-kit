@@ -10,8 +10,8 @@ type LogLabel =
 	| 'unknown';
 const OPEN_LOG_LABELS: LogLabel[] = [
 	// 'font',
-	'total render',
-	'anima render'
+	// 'total render',
+	// 'anima render'
 	// 'page transform',
 	// 'page sort',
 	// 'page render'

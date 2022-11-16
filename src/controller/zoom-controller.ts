@@ -61,7 +61,11 @@ export class ZoomController extends Disposable {
 
 		e.preventDefault();
 		const offset = this.getOffsetDelta(e);
-		this.view.pageState.moveView?.offset(offset.x, offset.y);
+		if (this.view.pageState.moving) {
+			this.view.pageState.focusingViews.forEach((v) => {
+				v.offset(offset.x, offset.y);
+			});
+		}
 		this.onOffset(offset);
 	};
 
