@@ -1,13 +1,14 @@
 import { merge, Subject } from 'rxjs';
 import { BaseView } from '../base/base-view';
+import { StretchDirection } from '../base/stretch-direction';
 
 export class PageState {
 	// todo focus的逻辑需要调整，支持同时选中多个元素
-	focusLayerView?: BaseView;
-	hoverLayerView?: BaseView;
-	moveLayerView?: BaseView;
-	stretchLayerView?: BaseView;
-	stretchDirection?: boolean[] = [false, false];
+	focusView?: BaseView;
+	hoverView?: BaseView;
+	moveView?: BaseView;
+	stretchView?: BaseView;
+	stretchDirection?: StretchDirection;
 
 	focusChange = new Subject();
 	hoverChange = new Subject();
@@ -24,42 +25,37 @@ export class PageState {
 	}
 
 	focusLayer(view: BaseView | undefined) {
-		if (this.focusLayerView?.id === view?.id) return;
-		if (this.focusLayerView) {
-			this.focusLayerView.z = 10;
+		if (this.focusView?.id === view?.id) return;
+		if (this.focusView) {
+			this.focusView.z = 10;
 		}
-		this.focusLayerView = view;
-		if (this.focusLayerView) {
-			this.focusLayerView.z = 100;
+		this.focusView = view;
+		if (this.focusView) {
+			this.focusView.z = 100;
 		}
 		this.focusChange.next();
 	}
 
 	hoverLayer(view: BaseView | undefined) {
-		if (this.hoverLayerView?.id === view?.id) return;
-		this.hoverLayerView = view;
+		if (this.hoverView?.id === view?.id) return;
+		this.hoverView = view;
 		this.hoverChange.next();
 	}
 
 	moveLayer(view: BaseView | undefined) {
-		if (this.moveLayerView?.id === view?.id) return;
-		this.moveLayerView = view;
-		if (this.moveLayerView) {
-			this.moveLayerView.z = 100;
+		if (this.moveView?.id === view?.id) return;
+		this.moveView = view;
+		if (this.moveView) {
+			this.moveView.z = 100;
 		}
 		this.moveChange.next();
 	}
 
-	/**
-	 *
-	 * @param view
-	 * @param directions true表示stretch的方向是left，false表示stretch的方向是right
-	 */
-	stretchLayer(view: BaseView | undefined, directions?: boolean[]) {
-		if (this.stretchLayerView?.id === view?.id) return;
-		this.stretchLayerView = view;
-		if (this.stretchLayerView) {
-			this.stretchLayerView.z = 100;
+	stretchLayer(view: BaseView | undefined, directions?: StretchDirection) {
+		if (this.stretchView?.id === view?.id) return;
+		this.stretchView = view;
+		if (this.stretchView) {
+			this.stretchView.z = 100;
 		}
 		this.stretchDirection = directions;
 		this.stretchChange.next();

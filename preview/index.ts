@@ -17,10 +17,6 @@ const canvasView = await CanvasView.create(canvasContainer);
 canvasView.loading = true;
 canvasView.startTick();
 
-// setTimeout(() => {
-// 	canvasView.loading = false;
-// }, 5000);
-
 canvasView.selectPage(canvasView.addPage(CellPage.default()));
 const page = canvasView.currentPage;
 
@@ -122,7 +118,7 @@ if (page && page instanceof CellPage) {
 						strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 					}
 				},
-				{ supportHover: true, supportFocus: true }
+				{ hover: true, focus: true }
 			)
 		]);
 		page.addXFixedViews([
@@ -147,7 +143,7 @@ if (page && page instanceof CellPage) {
 						strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 					}
 				},
-				{ supportHover: true, supportFocus: true }
+				{ hover: true, focus: true }
 			)
 		]);
 		page.addXFixedViews([
@@ -165,7 +161,7 @@ if (page && page instanceof CellPage) {
 						strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 					}
 				},
-				{ supportHover: true, supportFocus: true }
+				{ hover: true, focus: true }
 			)
 		]);
 	}
@@ -186,7 +182,7 @@ if (page && page instanceof CellPage) {
 							strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 						}
 					},
-					{ supportHover: true, supportFocus: true }
+					{ hover: true, focus: true }
 				)
 			]);
 		}
@@ -205,7 +201,7 @@ if (page && page instanceof CellPage) {
 						strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 					}
 				},
-				{ supportHover: true, supportFocus: true }
+				{ hover: true, focus: true }
 			)
 		]);
 	}
@@ -239,7 +235,7 @@ if (page && page instanceof CellPage) {
 							strokeColor: CanvasKitUtil.CanvasKit.Color(128, 128, 128)
 						}
 					},
-					{ supportHover: true, supportFocus: true },
+					{ hover: true, focus: true },
 					undefined,
 					1
 				)
@@ -284,7 +280,7 @@ if (page && page instanceof CellPage) {
 								strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 							}
 						},
-						{ supportHover: true, supportFocus: true, supportMove: true, supportStretch: true },
+						{ hover: true, focus: true, move: true, stretch: true },
 						undefined,
 						10
 					)

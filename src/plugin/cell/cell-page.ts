@@ -1,8 +1,8 @@
-import { BaseView } from '../base/base-view';
+import { BaseView } from '../../view/base/base-view';
 import { findViewTop, info, logMT } from '../../utils';
-import { BasePage } from '../page/base-page';
+import { BasePage } from '../../view/page/base-page';
 import { Point } from '../../base/point';
-import { EventSupport } from '../base/event-support';
+import { EventSupport } from '../../view/base/event-support';
 
 export class CellPage extends BasePage {
 	fixedViews: BaseView[] = [];

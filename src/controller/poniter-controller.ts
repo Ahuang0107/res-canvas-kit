@@ -4,8 +4,8 @@ import { fromEvent } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { CanvasView } from '../view/canvas-view';
 import { BaseView } from '../view/base/base-view';
-import { CellView } from '../view/cell';
 import { EventSupport } from '../view/base/event-support';
+import { StretchDirection } from '../view/base/stretch-direction';
 
 export class PointerController extends Disposable {
 	lastMousePos: Point = new Point();
@@ -31,11 +31,13 @@ export class PointerController extends Disposable {
 	// mousemove时需要根据当前stage来判断需要进行什么操作
 	onMousemove = (_event: Event) => {
 		const event = _event as MouseEvent;
-		if (this.view.pageState.moveLayerView) {
+		// 当moveLayerView非空时，鼠标移动意味着正在移动View
+		if (this.view.pageState.moveView) {
 			this.onViewMove(event);
 			return;
 		}
-		if (this.view.pageState.stretchLayerView) {
+		// 当stretchLayerView非空时，鼠标移动意味着正在拉伸View
+		if (this.view.pageState.stretchView) {
 			this.onViewStretch(event);
 			return;
 		}
@@ -46,7 +48,7 @@ export class PointerController extends Disposable {
 		const event = _event as MouseEvent;
 		const { offsetX, offsetY } = event;
 		const pt = new Point(offsetX, offsetY);
-		const targetView = this.findView(pt, { supportFocus: true });
+		const targetView = this.findView(pt, { focus: true });
 		if (!targetView) {
 			document.body.style.cursor = '';
 		}
@@ -55,16 +57,27 @@ export class PointerController extends Disposable {
 	};
 
 	onHover(event: MouseEvent) {
+		if (!this.view.currentPage) return;
 		const { offsetX, offsetY } = event;
+		// 鼠标相对canvas的坐标
 		const pt = new Point(offsetX, offsetY);
-		const targetView = this.findView(pt, { supportHover: true });
+		const offset = this.view.currentPage?.transform.position;
+		// 鼠标相对world的坐标
+		const worldPt = pt.minus(new Point(offset.x, offset.y));
+		const targetView = this.findView(pt, { hover: true });
+
 		// 当hover的view是当前focus的view，并且是CellView时，当pointer位置在两边时，pointer显示为col-resize
-		if (targetView?.id === this.view.pageState.focusLayerView?.id) {
-			if (targetView instanceof CellView) {
-				const [left, right] = targetView.inStretchArea(pt);
-				if (left || right) {
+		if (targetView?.id === this.view.pageState.focusView?.id) {
+			if (targetView?.es.stretch) {
+				if (targetView.stretchArea(StretchDirection.LEFT)?.containsPoint(worldPt)) {
 					document.body.style.cursor = 'col-resize';
-				} else if (!this.view.pageState.moveLayerView) {
+				} else if (targetView.stretchArea(StretchDirection.RIGHT)?.containsPoint(worldPt)) {
+					document.body.style.cursor = 'col-resize';
+				} else if (targetView.stretchArea(StretchDirection.TOP)?.containsPoint(worldPt)) {
+					document.body.style.cursor = 'row-resize';
+				} else if (targetView.stretchArea(StretchDirection.BOTTOM)?.containsPoint(worldPt)) {
+					document.body.style.cursor = 'row-resize';
+				} else {
 					document.body.style.cursor = '';
 				}
 			}
@@ -76,53 +89,62 @@ export class PointerController extends Disposable {
 	}
 
 	onMousedown = (_event: Event) => {
+		if (!this.view.currentPage) return;
 		const event = _event as MouseEvent;
 		const { offsetX, offsetY } = event;
+		// 鼠标相对canvas的坐标
 		const pt = new Point(offsetX, offsetY);
-		const targetView = this.findView(pt, { supportMove: true, supportStretch: true });
+		const offset = this.view.currentPage?.transform.position;
+		// 鼠标相对world的坐标
+		const worldPt = pt.minus(new Point(offset.x, offset.y));
+		const targetView = this.findView(pt, { move: true, stretch: true });
 
 		// 当mouse down的view是当前focus的view，并且是CellView时，
-		if (targetView?.id === this.view.pageState.focusLayerView?.id) {
-			if (targetView instanceof CellView) {
-				const [left, right] = targetView.inStretchArea(pt);
-				if (left || right) {
-					document.body.style.cursor = 'col-resize';
-					this.view.pageState.stretchLayer(targetView, [left, right]);
-				} else {
-					document.body.style.cursor = 'grabbing';
-					this.view.pageState.moveLayer(targetView);
-				}
+		if (targetView?.id === this.view.pageState.focusView?.id) {
+			let sd: StretchDirection | undefined = undefined;
+			if (targetView?.stretchArea(StretchDirection.LEFT)?.containsPoint(worldPt)) {
+				sd = StretchDirection.LEFT;
+			} else if (targetView?.stretchArea(StretchDirection.RIGHT)?.containsPoint(worldPt)) {
+				sd = StretchDirection.RIGHT;
+			} else if (targetView?.stretchArea(StretchDirection.TOP)?.containsPoint(worldPt)) {
+				sd = StretchDirection.TOP;
+			} else if (targetView?.stretchArea(StretchDirection.BOTTOM)?.containsPoint(worldPt)) {
+				sd = StretchDirection.BOTTOM;
+			}
+			if (sd !== undefined) {
+				document.body.style.cursor = 'col-resize';
+				this.view.pageState.stretchLayer(targetView, sd);
+			} else {
+				document.body.style.cursor = 'grabbing';
+				this.view.pageState.moveLayer(targetView);
 			}
 		}
 		this.lastMousePos = new Point(event.offsetX, event.offsetY);
 	};
 
 	onViewMove(event: MouseEvent) {
-		if (this.view.pageState.moveLayerView) {
+		if (this.view.pageState.moveView) {
 			const mousePos = new Point(event.offsetX, event.offsetY);
 			const offset = mousePos.compare(this.lastMousePos);
-			this.view.pageState.moveLayerView.offset(offset.x, offset.y);
+			this.view.pageState.moveView.offset(offset.x, offset.y);
 			this.view.markDirty();
 		}
 		this.lastMousePos = new Point(event.offsetX, event.offsetY);
 	}
 
 	onViewStretch(event: MouseEvent) {
-		if (
-			this.view.pageState.stretchLayerView instanceof CellView &&
-			this.view.pageState.stretchDirection
-		) {
-			const mousePos = new Point(event.offsetX, event.offsetY);
-			const offset = mousePos.compare(this.lastMousePos);
-			const [left] = this.view.pageState.stretchDirection;
-			if (left) {
-				this.view.pageState.stretchLayerView.stretchLeft(-offset.x);
-			} else {
-				this.view.pageState.stretchLayerView.stretchRight(offset.x);
-			}
-			this.view.markDirty();
+		if (!this.view.currentPage) return;
+		if (!this.view.pageState.stretchView) return;
+		const { offsetX, offsetY } = event;
+		const pt = new Point(offsetX, offsetY);
+		const offset = pt.compare(this.lastMousePos);
+		if (this.view.pageState.stretchDirection === StretchDirection.LEFT) {
+			this.view.pageState.stretchView.stretchLeft(-offset.x);
+		} else if (this.view.pageState.stretchDirection === StretchDirection.RIGHT) {
+			this.view.pageState.stretchView.stretchRight(offset.x);
 		}
-		this.lastMousePos = new Point(event.offsetX, event.offsetY);
+		this.view.markDirty();
+		this.lastMousePos = pt;
 	}
 
 	onMouseup = () => {
@@ -133,8 +155,8 @@ export class PointerController extends Disposable {
 
 	onDeleteKey = (_event: Event) => {
 		const event = _event as KeyboardEvent;
-		if (event.key === 'Delete' && this.view.pageState.focusLayerView) {
-			this.view.currentPage?.delete(this.view.pageState.focusLayerView);
+		if (event.key === 'Delete' && this.view.pageState.focusView) {
+			this.view.currentPage?.delete(this.view.pageState.focusView);
 		}
 	};
 

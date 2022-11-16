@@ -1,6 +1,6 @@
 import { Rect } from '../../base/rect';
 import { Color } from '@skeditor/canvaskit-wasm';
-import { ComponentCaches, DrawCache, ParaCache, RectCache } from '../base/cache';
+import { ComponentCaches, DrawCache, ParaCache, RectCache } from '../../view/base/cache';
 import { Point } from '../../base/point';
 import { CanvasKitUtil } from '../../utils';
 

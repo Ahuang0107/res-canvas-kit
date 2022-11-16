@@ -1,5 +1,5 @@
-import { BaseView } from '../base/base-view';
-import { ComponentCaches, DrawCache, LineCache } from '../base/cache';
+import { BaseView } from '../../view/base/base-view';
+import { ComponentCaches, DrawCache, LineCache } from '../../view/base/cache';
 import { Rect } from '../../base/rect';
 import { Color } from '@skeditor/canvaskit-wasm';
 import { CanvasKitUtil } from '../../utils';
