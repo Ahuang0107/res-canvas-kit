@@ -257,8 +257,8 @@ if (page && page instanceof CellPage) {
 								'AUD2022-12 LT Suzhou',
 								'AUP2022‐12 NB CR Gas',
 								'IPO2020-12 Audit Support',
-								'INT2021-06 CCB BR Anhui',
-								'FAA2023-04 SUBGROUP Methode SH',
+								'INT2021-06 CCB BR 安徽',
+								'FAA2023-04 SUBGROUP Methode 武汉',
 								'SPC2022-09 DNE',
 								'NTS2012-09 PIM Audit'
 							][Math.round((Math.random() * 10) % 6)],
@@ -291,6 +291,6 @@ if (page && page instanceof CellPage) {
 	// todo 一次性把所有的view都prebuild掉会有很长一段的页面空白期，
 	//  同时loading的动画也是无法加载的，除非将loading动画放到这块canvas之外加载
 	// 基本render的cost在60ms之内都是可以接受的
-	// page.prebuild(true);
+	// page.prebuild();
 	canvasView.loading = false;
 }

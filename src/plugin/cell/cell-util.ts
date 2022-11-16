@@ -1,8 +1,8 @@
 import { Rect } from '../../base/rect';
 import { Color } from '@skeditor/canvaskit-wasm';
-import { ComponentCaches, DrawCache, ParaCache, RectCache } from '../../view/base/cache';
-import { Point } from '../../base/point';
+import { ComponentCaches, DrawCache, RectCache, TextCache } from '../../view/base/cache';
 import { CanvasKitUtil } from '../../utils';
+import { Point } from '../../base/point';
 
 export type CellConfig = {
 	text?: string;
@@ -21,24 +21,18 @@ type CellStyle = {
 export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 	const { text, textSize = 12, style, hoverStyle, focusStyle } = config;
 
-	let cache: DrawCache[] | undefined = undefined;
+	let normalCache: DrawCache[] | undefined = undefined;
 	if (style) {
-		cache = [];
+		normalCache = [];
 		const { fillColor, strokeColor } = style;
 
 		// todo 这里只是设置一个颜色的paint的话，不需要每次创建这个对象
 		if (fillColor) {
-			const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
-			fillPaint.setColor(fillColor);
-			cache.push(new RectCache(frame, fillPaint));
+			normalCache.push(new RectCache(frame, CanvasKitUtil.fillPaint(fillColor)));
 		}
 
 		if (strokeColor) {
-			const strokePaint = new CanvasKitUtil.CanvasKit.Paint();
-			strokePaint.setColor(strokeColor);
-			strokePaint.setStyle(CanvasKitUtil.CanvasKit.PaintStyle.Stroke);
-			strokePaint.setStrokeWidth(1);
-			cache.push(new RectCache(frame, strokePaint));
+			normalCache.push(new RectCache(frame, CanvasKitUtil.strokePaint(strokeColor)));
 		}
 	}
 
@@ -47,17 +41,11 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 		hoverCache = [];
 		const { fillColor: hoverFillColor, strokeColor: hoverStrokeColor } = hoverStyle;
 		if (hoverFillColor) {
-			const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
-			fillPaint.setColor(hoverFillColor);
-			hoverCache.push(new RectCache(frame, fillPaint));
+			hoverCache.push(new RectCache(frame, CanvasKitUtil.fillPaint(hoverFillColor)));
 		}
 
 		if (hoverStrokeColor) {
-			const strokePaint = new CanvasKitUtil.CanvasKit.Paint();
-			strokePaint.setColor(hoverStrokeColor);
-			strokePaint.setStyle(CanvasKitUtil.CanvasKit.PaintStyle.Stroke);
-			strokePaint.setStrokeWidth(1);
-			hoverCache.push(new RectCache(frame, strokePaint));
+			hoverCache.push(new RectCache(frame, CanvasKitUtil.strokePaint(hoverStrokeColor)));
 		}
 	}
 
@@ -67,44 +55,32 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 		focusCache = [];
 		const { fillColor: focusFillColor, strokeColor: focusStrokeColor } = focusStyle;
 		if (focusFillColor) {
-			const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
-			fillPaint.setColor(focusFillColor);
-			focusCache.push(new RectCache(frame, fillPaint));
+			focusCache.push(new RectCache(frame, CanvasKitUtil.fillPaint(focusFillColor)));
 		}
 
 		if (focusStrokeColor) {
-			const strokePaint = new CanvasKitUtil.CanvasKit.Paint();
-			strokePaint.setColor(focusStrokeColor);
-			strokePaint.setStyle(CanvasKitUtil.CanvasKit.PaintStyle.Stroke);
-			strokePaint.setStrokeWidth(1);
-			focusCache.push(new RectCache(frame, strokePaint));
+			focusCache.push(new RectCache(frame, CanvasKitUtil.strokePaint(focusStrokeColor)));
 		}
 	}
 
+	let cache: DrawCache[] | undefined = undefined;
 	if (text) {
-		const paraStyle = new CanvasKitUtil.CanvasKit.ParagraphStyle({
-			textStyle: {
-				color: CanvasKitUtil.CanvasKit.BLACK,
-				fontSize: textSize
-			},
-			textAlign: CanvasKitUtil.CanvasKit.TextAlign.Center,
-			maxLines: 1,
-			ellipsis: '...'
-		});
-		const paraCache = new ParaCache(
-			frame,
-			text,
-			paraStyle,
-			new Point(0, (frame.height - textSize) / 2),
-			true
-		);
+		cache = [];
+		// const paraStyle = CanvasKitUtil.paragraphStyle(textSize);
+		// const paraCache = new ParaCache(
+		// 	frame,
+		// 	text,
+		// 	paraStyle,
+		// 	new Point(0, (frame.height - textSize) / 2),
+		// 	true
+		// );
+		const paraCache = new TextCache(frame, text, new Point(5, (frame.height - 12) / 2 + 12));
 		cache?.push(paraCache);
-		hoverCache?.push(paraCache);
-		focusCache?.push(paraCache);
 	}
 
 	return {
 		cache,
+		normalCache,
 		hoverCache,
 		focusCache
 	};

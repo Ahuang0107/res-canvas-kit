@@ -138,6 +138,9 @@ export abstract class BaseView {
 
 	protected _render(): void {
 		const { skCanvas } = this.ctx;
+		this.caches?.normalCache?.forEach((cache) => {
+			cache.draw(skCanvas);
+		});
 		this.caches?.cache?.forEach((cache) => {
 			cache.draw(skCanvas);
 		});
@@ -145,14 +148,20 @@ export abstract class BaseView {
 
 	protected _hoverRender(): void {
 		const { skCanvas } = this.ctx;
-		(this.caches.hoverCache ?? this.caches.cache)?.forEach((cache) => {
+		(this.caches.hoverCache ?? this.caches.normalCache)?.forEach((cache) => {
+			cache.draw(skCanvas);
+		});
+		this.caches?.cache?.forEach((cache) => {
 			cache.draw(skCanvas);
 		});
 	}
 
 	protected _focusRender(): void {
 		const { skCanvas } = this.ctx;
-		(this.caches.focusCache ?? this.caches.cache)?.forEach((cache) => {
+		(this.caches.focusCache ?? this.caches.normalCache)?.forEach((cache) => {
+			cache.draw(skCanvas);
+		});
+		this.caches?.cache?.forEach((cache) => {
 			cache.draw(skCanvas);
 		});
 	}

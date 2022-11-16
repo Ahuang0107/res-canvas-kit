@@ -43,6 +43,17 @@ export class CanvasView extends Disposable {
 		);
 
 		this.loadingView = AnimaView.new();
+		this.loadingView.prebuild();
+
+		const surface = CanvasKitUtil.CanvasKit.MakeOnScreenGLSurface(
+			this.grContext,
+			canvasEl.width,
+			canvasEl.height,
+			CanvasKitUtil.CanvasKit.ColorSpace.SRGB
+		);
+		if (!surface) return;
+		this.skSurface = surface;
+		this.skCanvas = surface.getCanvas();
 	}
 
 	get currentPage(): BasePage | undefined {
@@ -189,7 +200,7 @@ export class CanvasView extends Disposable {
 	private render() {
 		if (!this.dirty) return;
 		const start = Date.now();
-		this.createSkSurfaceAndCanvas();
+		// this.createSkSurfaceAndCanvas();
 		if (!this.skSurface) return;
 		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
 		if (this.currentPage) {
@@ -210,7 +221,7 @@ export class CanvasView extends Disposable {
 	private loadingRender() {
 		if (!this.loading) return;
 		const start = Date.now();
-		this.createSkSurfaceAndCanvas();
+		// this.createSkSurfaceAndCanvas();
 		if (!this.skSurface) return;
 		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
 		this.skCanvas.save();
