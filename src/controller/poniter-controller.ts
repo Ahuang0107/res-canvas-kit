@@ -46,14 +46,15 @@ export class PointerController extends Disposable {
 
 	onClick = (_event: Event) => {
 		const event = _event as MouseEvent;
-		const { offsetX, offsetY } = event;
+		const { offsetX, offsetY, ctrlKey } = event;
 		const pt = new Point(offsetX, offsetY);
 		const targetView = this.findView(pt, { focus: true });
 		if (!targetView) {
 			document.body.style.cursor = '';
 		}
 
-		this.view.pageState.focusLayer(targetView);
+		this.view.pageState.focusView(targetView, ctrlKey);
+		console.log(this.view.pageState.focusingViews);
 	};
 
 	onHover(event: MouseEvent) {
@@ -67,7 +68,7 @@ export class PointerController extends Disposable {
 		const targetView = this.findView(pt, { hover: true });
 
 		// 当hover的view是当前focus的view，并且是CellView时，当pointer位置在两边时，pointer显示为col-resize
-		if (targetView?.id === this.view.pageState.focusView?.id) {
+		if (this.view.pageState.ifFocus(targetView)) {
 			if (targetView?.es.stretch) {
 				if (targetView.stretchArea(StretchDirection.LEFT)?.containsPoint(worldPt)) {
 					document.body.style.cursor = 'col-resize';
@@ -100,7 +101,7 @@ export class PointerController extends Disposable {
 		const targetView = this.findView(pt, { move: true, stretch: true });
 
 		// 当mouse down的view是当前focus的view，并且是CellView时，
-		if (targetView?.id === this.view.pageState.focusView?.id) {
+		if (this.view.pageState.ifFocus(targetView)) {
 			let sd: StretchDirection | undefined = undefined;
 			if (targetView?.stretchArea(StretchDirection.LEFT)?.containsPoint(worldPt)) {
 				sd = StretchDirection.LEFT;
@@ -155,8 +156,10 @@ export class PointerController extends Disposable {
 
 	onDeleteKey = (_event: Event) => {
 		const event = _event as KeyboardEvent;
-		if (event.key === 'Delete' && this.view.pageState.focusView) {
-			this.view.currentPage?.delete(this.view.pageState.focusView);
+		if (event.key === 'Delete' && this.view.pageState.focusingViews.length > 0) {
+			this.view.pageState.focusingViews.forEach((v) => {
+				this.view.currentPage?.delete(v);
+			});
 		}
 	};
 

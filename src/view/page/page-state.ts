@@ -3,8 +3,7 @@ import { BaseView } from '../base/base-view';
 import { StretchDirection } from '../base/stretch-direction';
 
 export class PageState {
-	// todo focus的逻辑需要调整，支持同时选中多个元素
-	focusView?: BaseView;
+	focusingViews: BaseView[] = [];
 	hoverView?: BaseView;
 	moveView?: BaseView;
 	stretchView?: BaseView;
@@ -24,16 +23,24 @@ export class PageState {
 		// this.moveLayer(undefined);
 	}
 
-	focusLayer(view: BaseView | undefined) {
-		if (this.focusView?.id === view?.id) return;
-		if (this.focusView) {
-			this.focusView.z = 10;
-		}
-		this.focusView = view;
-		if (this.focusView) {
-			this.focusView.z = 100;
+	focusView(view: BaseView | undefined, add = false) {
+		if (view) {
+			if (add) {
+				this.focusingViews.push(view);
+			} else {
+				this.focusingViews = [];
+				this.focusingViews.push(view);
+			}
+		} else {
+			this.focusingViews = [];
 		}
 		this.focusChange.next();
+	}
+
+	ifFocus(view: BaseView | undefined): boolean {
+		if (!view) return false;
+		const ids = this.focusingViews.map((v) => v.id);
+		return ids.includes(view.id);
 	}
 
 	hoverLayer(view: BaseView | undefined) {
@@ -45,18 +52,12 @@ export class PageState {
 	moveLayer(view: BaseView | undefined) {
 		if (this.moveView?.id === view?.id) return;
 		this.moveView = view;
-		if (this.moveView) {
-			this.moveView.z = 100;
-		}
 		this.moveChange.next();
 	}
 
 	stretchLayer(view: BaseView | undefined, directions?: StretchDirection) {
 		if (this.stretchView?.id === view?.id) return;
 		this.stretchView = view;
-		if (this.stretchView) {
-			this.stretchView.z = 100;
-		}
 		this.stretchDirection = directions;
 		this.stretchChange.next();
 	}

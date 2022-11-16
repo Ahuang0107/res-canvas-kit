@@ -65,7 +65,7 @@ export abstract class BaseView {
 		const { skCanvas } = this.ctx;
 		skCanvas.save();
 		// 这里需要注意顺序，先判断是否focus再判断hover，因为focus时也一定时hover的
-		if (this.ctx.pageState.focusView?.id == this.id) {
+		if (this.ctx.pageState.ifFocus(this)) {
 			this._focusRender();
 		} else if (this.ctx.pageState.hoverView?.id == this.id) {
 			this._hoverRender();
