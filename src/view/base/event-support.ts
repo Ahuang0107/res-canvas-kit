@@ -3,4 +3,5 @@ export type EventSupport = {
 	focus?: boolean;
 	move?: boolean;
 	stretch?: boolean;
+	delete?: boolean;
 };

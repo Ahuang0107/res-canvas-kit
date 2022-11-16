@@ -49,6 +49,8 @@ export class PageState {
 		this.hoverChange.next();
 	}
 
+	// todo focus和move/stretch等交互元素应该是保持一致的，当发生move/stretch事件时
+	//  实际上target就应该是当前focus的若干个view
 	moveLayer(view: BaseView | undefined) {
 		if (this.moveView?.id === view?.id) return;
 		this.moveView = view;

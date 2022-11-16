@@ -7,6 +7,7 @@ import { BaseView } from '../view/base/base-view';
 import { EventSupport } from '../view/base/event-support';
 import { StretchDirection } from '../view/base/stretch-direction';
 
+// todo 交互事件一般伴随着更新后端数据，此时可能网络请求失败，需要进行回退操作，或者说网络请求成功时才进行
 export class PointerController extends Disposable {
 	lastMousePos: Point = new Point();
 
@@ -44,6 +45,7 @@ export class PointerController extends Disposable {
 		this.onHover(event);
 	};
 
+	// todo 增加cut事件，比如鼠标移动到列的竖线上时可以进行裁切，然后将当前的focus的所有view都进行裁切
 	onClick = (_event: Event) => {
 		const event = _event as MouseEvent;
 		const { offsetX, offsetY, ctrlKey } = event;
@@ -158,7 +160,9 @@ export class PointerController extends Disposable {
 		const event = _event as KeyboardEvent;
 		if (event.key === 'Delete' && this.view.pageState.focusingViews.length > 0) {
 			this.view.pageState.focusingViews.forEach((v) => {
-				this.view.currentPage?.delete(v);
+				if (v.es.delete) {
+					this.view.currentPage?.delete(v);
+				}
 			});
 		}
 	};

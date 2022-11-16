@@ -8,7 +8,7 @@ export class CellView extends BaseView {
 	protected constructor(
 		frame: Rect,
 		private config: CellConfig,
-		eventSupport: EventSupport,
+		es: EventSupport,
 		/**
 		 * CellView 主要用来渲染表格数据，经常会与数据模型有一对一的关系，因此数据更新时可以使用此model来关联更新视图
 		 */
@@ -16,11 +16,7 @@ export class CellView extends BaseView {
 		z?: number
 	) {
 		super(frame, z);
-		const { hover = false, focus = false, move = false, stretch = false } = eventSupport;
-		this.es.hover = hover;
-		this.es.focus = focus;
-		this.es.move = move;
-		this.es.stretch = stretch;
+		this.es = es;
 		this.sp[0] = 5;
 		this.sp[1] = 5;
 	}

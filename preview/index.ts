@@ -280,7 +280,7 @@ if (page && page instanceof CellPage) {
 								strokeColor: CanvasKitUtil.CanvasKit.Color(68, 67, 89)
 							}
 						},
-						{ hover: true, focus: true, move: true, stretch: true },
+						{ hover: true, focus: true, move: true, stretch: true, delete: true },
 						undefined,
 						10
 					)

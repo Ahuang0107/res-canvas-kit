@@ -10,7 +10,7 @@ let id = 0;
 export abstract class BaseView {
 	id: string;
 	ctx: CanvasView;
-	// 控制该view对交互事件的支持
+	// 控制该view对交互事件的支持，默认都是false的
 	es: EventSupport = {};
 	// stretch区域的padding
 	sp: (number | undefined)[] = [undefined, undefined, undefined, undefined];
