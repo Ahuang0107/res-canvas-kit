@@ -17,7 +17,6 @@ type CellStyle = {
 	strokeColor?: Color;
 };
 
-// todo 需要避免创建多余的ParaCache，所以hover和focus时尽量也使用同一个cache
 export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 	const { text, textSize = 12, style, hoverStyle, focusStyle } = config;
 
@@ -26,7 +25,6 @@ export function buildCell(frame: Rect, config: CellConfig): ComponentCaches {
 		normalCache = [];
 		const { fillColor, strokeColor } = style;
 
-		// todo 这里只是设置一个颜色的paint的话，不需要每次创建这个对象
 		if (fillColor) {
 			normalCache.push(new RectCache(frame, CanvasKitUtil.fillPaint(fillColor)));
 		}

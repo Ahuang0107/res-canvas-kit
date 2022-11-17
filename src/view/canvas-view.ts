@@ -200,7 +200,7 @@ export class CanvasView extends Disposable {
 	private render() {
 		if (!this.dirty) return;
 		const start = Date.now();
-		// this.createSkSurfaceAndCanvas();
+		this.createSkSurfaceAndCanvas();
 		if (!this.skSurface) return;
 		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
 		if (this.currentPage) {
@@ -221,7 +221,7 @@ export class CanvasView extends Disposable {
 	private loadingRender() {
 		if (!this.loading) return;
 		const start = Date.now();
-		// this.createSkSurfaceAndCanvas();
+		this.createSkSurfaceAndCanvas();
 		if (!this.skSurface) return;
 		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
 		this.skCanvas.save();

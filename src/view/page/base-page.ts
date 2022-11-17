@@ -80,4 +80,8 @@ export abstract class BasePage {
 	}
 
 	abstract findViewTop(pt: Point, es: EventSupport): BaseView | undefined;
+
+	clearViews() {
+		this.views = []
+	}
 }

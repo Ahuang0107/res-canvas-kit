@@ -1,20 +1,190 @@
 import { BaseView } from '../../view/base/base-view';
-import { findViewTop, info, logMT } from '../../utils';
+import { CanvasKitUtil, findViewTop, info, logMT } from '../../utils';
 import { BasePage } from '../../view/page/base-page';
 import { Point } from '../../base/point';
 import { EventSupport } from '../../view/base/event-support';
+import { CellView } from './cell-view';
+import { BookingsModel, CellsModel, ColumnModel } from './model';
 
 export class CellPage extends BasePage {
 	fixedViews: BaseView[] = [];
 	xFixedViews: BaseView[] = [];
 	yFixedViews: BaseView[] = [];
 
-	protected constructor() {
+	protected constructor(
+		private columnModel: ColumnModel,
+		private bookingsModel: BookingsModel,
+		private cellsModel: CellsModel
+	) {
 		super();
 	}
 
-	static default(): CellPage {
-		return new CellPage();
+	static new(
+		columnMode: ColumnModel,
+		bookingsModel: BookingsModel,
+		cellsModel: CellsModel
+	): CellPage {
+		return new CellPage(columnMode, bookingsModel, cellsModel);
+	}
+
+	updateFromModel() {
+		const headFillColor = CanvasKitUtil.CanvasKit.Color(217, 217, 217);
+		const headStrokeColor = CanvasKitUtil.CanvasKit.Color(68, 67, 89);
+		const cellFillColor = CanvasKitUtil.CanvasKit.WHITE;
+		const cellHoverColor = CanvasKitUtil.CanvasKit.Color(240, 240, 240);
+		const cellFocusColor = CanvasKitUtil.CanvasKit.Color(217, 217, 217);
+		const cellStrokeColor = CanvasKitUtil.CanvasKit.Color(128, 128, 128);
+		const bookingFillColor = CanvasKitUtil.CanvasKit.Color(129, 199, 212);
+
+		const rowHeight = this.cellsModel.height;
+		const rowsNum = this.columnModel.rows.length;
+		const headsRowsNum = this.cellsModel.multiHeads.length;
+		const cellWidth = this.cellsModel.width;
+
+		this.clearViews();
+		this.controller.option.yMin = 0;
+		this.controller.option.yMax = (rowsNum - headsRowsNum + 1) * rowHeight;
+
+		this.cellsModel.multiHeads.forEach((heads, index) => {
+			heads.forEach((head) => {
+				this.addYFixedViews([
+					CellView.from(
+						head.index * cellWidth,
+						index * rowHeight,
+						head.width ?? cellWidth,
+						rowHeight,
+						{
+							text: head.text,
+							style: {
+								fillColor: headFillColor,
+								strokeColor: headStrokeColor
+							},
+							hoverStyle: {
+								fillColor: cellHoverColor,
+								strokeColor: headStrokeColor
+							}
+						},
+						{ hover: true }
+					)
+				]);
+			});
+		});
+
+		this.cellsModel.multiHeads[this.cellsModel.columnLineFollowHeadIndex]?.forEach((head) => {
+			for (let rowIndex = 0; rowIndex < rowsNum; rowIndex += 1) {
+				const y = (this.cellsModel.multiHeads.length + rowIndex) * rowHeight;
+				this.addViews([
+					CellView.from(
+						head.index * cellWidth,
+						y,
+						32,
+						rowHeight,
+						{
+							style: {
+								fillColor: cellFillColor,
+								strokeColor: cellStrokeColor
+							},
+							hoverStyle: {
+								fillColor: cellHoverColor,
+								strokeColor: cellStrokeColor
+							},
+							focusStyle: {
+								fillColor: cellFocusColor,
+								strokeColor: cellStrokeColor
+							}
+						},
+						{ hover: true, focus: true },
+						undefined,
+						1
+					)
+				]);
+			}
+		});
+
+		this.bookingsModel.bookings.forEach((bookings, index) => {
+			bookings.forEach((booking) => {
+				this.addViews([
+					CellView.from(
+						booking.index * cellWidth + (booking.offset ?? 0),
+						(this.cellsModel.multiHeads.length + index) * rowHeight,
+						booking.width ?? cellWidth,
+						rowHeight,
+						{
+							text: booking.text,
+							textSize: 10,
+							style: {
+								fillColor: bookingFillColor,
+								strokeColor: headStrokeColor
+							},
+							hoverStyle: {
+								fillColor: cellHoverColor,
+								strokeColor: headStrokeColor
+							},
+							focusStyle: {
+								fillColor: cellFocusColor,
+								strokeColor: headStrokeColor
+							}
+						},
+						{ hover: true, focus: true, move: true, stretch: true, delete: true },
+						undefined,
+						10
+					)
+				]);
+			});
+		});
+
+		this.columnModel.multiHeads.forEach((heads, index) => {
+			let xStart = 0;
+			heads.forEach((head) => {
+				this.addFixedViews([
+					CellView.from(
+						xStart,
+						index * rowHeight,
+						head.width,
+						rowHeight,
+						{
+							text: head.text,
+							style: {
+								fillColor: headFillColor,
+								strokeColor: headStrokeColor
+							},
+							hoverStyle: {
+								fillColor: cellHoverColor,
+								strokeColor: headStrokeColor
+							}
+						},
+						{ hover: true }
+					)
+				]);
+				xStart += head.width;
+			});
+		});
+		this.columnModel.rows.forEach((row, index) => {
+			let xStart = 0;
+			row.forEach((data) => {
+				this.addXFixedViews([
+					CellView.from(
+						xStart,
+						(this.columnModel.multiHeads.length + index) * rowHeight,
+						data.width,
+						rowHeight,
+						{
+							text: data.text,
+							style: {
+								fillColor: cellHoverColor,
+								strokeColor: headStrokeColor
+							},
+							hoverStyle: {
+								fillColor: cellFocusColor,
+								strokeColor: headStrokeColor
+							}
+						},
+						{ hover: true }
+					)
+				]);
+				xStart += data.width;
+			});
+		});
 	}
 
 	/**
@@ -157,5 +327,12 @@ export class CellPage extends BasePage {
 			findViewTop(this.yFixedViews, pt, es, undefined, 0) ??
 			findViewTop(this.views, pt, es, undefined, undefined)
 		);
+	}
+
+	clearViews() {
+		super.clearViews();
+		this.fixedViews = [];
+		this.xFixedViews = [];
+		this.yFixedViews = [];
 	}
 }

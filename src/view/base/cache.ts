@@ -20,7 +20,7 @@ export type ComponentCaches = {
 	focusCache?: DrawCache[];
 };
 
-export type DrawCache = RectCache | ParaCache | TextCache | LineCache | AnimaCache;
+export type DrawCache = RectCache | TextCache | LineCache | AnimaCache;
 
 abstract class Cache {
 	protected constructor(public frame: Rect) {}
