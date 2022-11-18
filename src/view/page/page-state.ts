@@ -1,14 +1,19 @@
 import { merge, Subject } from 'rxjs';
 import { BaseView } from '../base/base-view';
 import { StretchDirection } from '../base/stretch-direction';
+import { CellView, newCellViewFrom } from '../../plugin/cell/cell-view';
+import { Point } from '../../base/point';
+import { COLOR } from '../utils';
+import { CanvasView } from '../canvas-view';
 
 export class PageState {
 	focusingViews: BaseView[] = [];
 	hoverView?: BaseView;
 	// true 表示正在move view
 	moving = false;
-	// 不为undefined 表示正在stretch view
 	stretchDirection?: StretchDirection;
+
+	hoverCell: CellView[] = [];
 
 	focusChange = new Subject();
 	hoverChange = new Subject();
@@ -41,10 +46,32 @@ export class PageState {
 		return ids.includes(view.id);
 	}
 
+	ifHover(view: BaseView | undefined): boolean {
+		if (!view) return false;
+		return view.id === this.hoverView?.id;
+	}
+
 	hoverLayer(view: BaseView | undefined) {
 		if (this.hoverView?.id === view?.id) return;
 		this.hoverView = view;
 		this.hoverChange.next();
+	}
+
+	hoverEmptyCell(pt?: Point) {
+		this.hoverCell = [];
+		if (pt) {
+			const offset = CanvasView.currentContext.currentPage?.transform.position;
+			if (offset) {
+				const actualX = pt.x - offset.x;
+				const actualY = pt.y - offset.y;
+				const floorX = Math.floor(actualX / 32) * 32;
+				const floorY = Math.floor(actualY / 24) * 24;
+				this.hoverCell.push(
+					newCellViewFrom(floorX, floorY, 32, 24, { fillColor: COLOR.SHIRONEZUMI }, {})
+				);
+				this.hoverChange.next();
+			}
+		}
 	}
 
 	moveLayer(moving: boolean) {

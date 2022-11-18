@@ -3,6 +3,7 @@ import { BehaviorSubject, fromEvent, merge, Observable } from 'rxjs';
 import bowser from 'bowser';
 import { Point } from '../base/point';
 import { CanvasView } from '../view/canvas-view';
+import { rectOffset } from '../base/rect';
 
 export interface ZoomOption {
 	xMin?: number;
@@ -63,7 +64,7 @@ export class ZoomController extends Disposable {
 		const offset = this.getOffsetDelta(e);
 		if (this.view.pageState.moving) {
 			this.view.pageState.focusingViews.forEach((v) => {
-				v.offset(offset.x, offset.y);
+				rectOffset(v.frame, offset.x, offset.y);
 			});
 		}
 		this.onOffset(offset);

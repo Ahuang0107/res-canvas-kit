@@ -1,15 +1,38 @@
-import { BaseView } from '../../view/base/base-view';
-import { CanvasKitUtil, findViewTop, info, logMT } from '../../utils';
+import { BaseView, ViewType } from '../../view/base/base-view';
+import { findViewTop, logMeasureTime } from '../../utils';
 import { BasePage } from '../../view/page/base-page';
 import { Point } from '../../base/point';
 import { EventSupport } from '../../view/base/event-support';
-import { CellView } from './cell-view';
 import { BookingsModel, CellsModel, ColumnModel } from './model';
+import { LineView, newLineViewFromH, newLineViewFromV, renderLine } from './line-view';
+import invariant from 'ts-invariant';
+import { CellView, newCellViewFrom, renderCell } from './cell-view';
+import { rectCopyWithOffset } from '../../base/rect';
+import { COLOR } from '../../view/utils';
 
+/**
+ * 虽然名称叫CellPage，但是目前改造成专门为渲染Reservation类型数据的TablePage
+ * 最底层渲染表格的横线竖线 - skeletonViews
+ * 上面一层渲染booking数据 - bookingViews
+ * 再上面一层渲染booking的表头数据（y轴不会移动） - bookingHeadViews
+ * 再上面一层渲染左侧关联数据（x轴不会移动） - bookingKeyViews
+ * 最上层渲染左上角的关联数据的表头（x轴和y轴都不会移动） - bookingKeyHeadViews
+ */
 export class CellPage extends BasePage {
-	fixedViews: BaseView[] = [];
-	xFixedViews: BaseView[] = [];
-	yFixedViews: BaseView[] = [];
+	// todo 目前先不用，性能的瓶颈更多的是在booking数据太大遍历cost太大，需要分tile
+	//  主要的问题是booking的跨度可以很大，所以横向不知道如何划分
+	//  竖向因为行高是固定的，所以可以进行tile划分
+	skeletonViews: BaseView[] = [];
+	// 二级分页
+	bookingViewsTiles: Map<number, Map<number, BaseView[]>> = new Map();
+	bookingHeadViews: BaseView[] = [];
+	bookingKeyViews: BaseView[] = [];
+	bookingKeyHeadViews: BaseView[] = [];
+
+	rowHeight = 0;
+	cellWidth = 0;
+
+	yFirstPageSize = 50;
 
 	protected constructor(
 		private columnModel: ColumnModel,
@@ -28,220 +51,128 @@ export class CellPage extends BasePage {
 	}
 
 	updateFromModel() {
-		const headFillColor = CanvasKitUtil.CanvasKit.Color(217, 217, 217);
-		const headStrokeColor = CanvasKitUtil.CanvasKit.Color(68, 67, 89);
-		const cellFillColor = CanvasKitUtil.CanvasKit.WHITE;
-		const cellHoverColor = CanvasKitUtil.CanvasKit.Color(240, 240, 240);
-		const cellFocusColor = CanvasKitUtil.CanvasKit.Color(217, 217, 217);
-		const cellStrokeColor = CanvasKitUtil.CanvasKit.Color(128, 128, 128);
-		const bookingFillColor = CanvasKitUtil.CanvasKit.Color(129, 199, 212);
-
-		const rowHeight = this.cellsModel.height;
+		this.rowHeight = this.cellsModel.height;
+		this.cellWidth = this.cellsModel.width;
+		const rowHeight = this.rowHeight;
 		const rowsNum = this.columnModel.rows.length;
 		const headsRowsNum = this.cellsModel.multiHeads.length;
-		const cellWidth = this.cellsModel.width;
+		const cellWidth = this.cellWidth;
 
 		this.clearViews();
 		this.controller.option.yMin = 0;
-		this.controller.option.yMax = (rowsNum - headsRowsNum + 1) * rowHeight;
+		this.controller.option.yMax = (rowsNum - headsRowsNum) * rowHeight;
 
+		logMeasureTime();
 		this.cellsModel.multiHeads.forEach((heads, index) => {
 			heads.forEach((head) => {
-				this.addYFixedViews([
-					CellView.from(
+				this.bookingHeadViews.push(
+					newCellViewFrom(
 						head.index * cellWidth,
 						index * rowHeight,
 						head.width ?? cellWidth,
 						rowHeight,
 						{
 							text: head.text,
-							style: {
-								fillColor: headFillColor,
-								strokeColor: headStrokeColor
-							},
-							hoverStyle: {
-								fillColor: cellHoverColor,
-								strokeColor: headStrokeColor
-							}
+							fillColor: COLOR.SHIRONEZUMI,
+							strokeColor: COLOR.AISUMICHA
 						},
 						{ hover: true }
 					)
-				]);
+				);
 			});
 		});
+		logMeasureTime('Prepare Date', 'date head');
 
 		this.cellsModel.multiHeads[this.cellsModel.columnLineFollowHeadIndex]?.forEach((head) => {
+			this.skeletonViews.push(
+				newLineViewFromV(head.index * cellWidth, 0, (rowsNum + headsRowsNum) * rowHeight)
+			);
+		});
+
+		const calHeads = this.cellsModel.multiHeads[this.cellsModel.columnLineFollowHeadIndex];
+		if (calHeads) {
+			const minX = (calHeads[0]?.index ?? 0) * cellWidth;
+			const maxX = ((calHeads[calHeads.length - 1]?.index ?? 0) + 1) * cellWidth;
 			for (let rowIndex = 0; rowIndex < rowsNum; rowIndex += 1) {
-				const y = (this.cellsModel.multiHeads.length + rowIndex) * rowHeight;
-				this.addViews([
-					CellView.from(
-						head.index * cellWidth,
-						y,
-						32,
-						rowHeight,
-						{
-							style: {
-								fillColor: cellFillColor,
-								strokeColor: cellStrokeColor
-							},
-							hoverStyle: {
-								fillColor: cellHoverColor,
-								strokeColor: cellStrokeColor
-							},
-							focusStyle: {
-								fillColor: cellFocusColor,
-								strokeColor: cellStrokeColor
-							}
-						},
-						{ hover: true, focus: true },
-						undefined,
-						1
+				this.skeletonViews.push(
+					newLineViewFromH(
+						minX,
+						(this.cellsModel.multiHeads.length + rowIndex) * rowHeight,
+						maxX - minX
 					)
-				]);
+				);
 			}
-		});
+		}
 
+		logMeasureTime();
+		for (let i = 0; i < rowsNum; i += this.yFirstPageSize) {
+			this.bookingViewsTiles.set(Math.floor(i / this.yFirstPageSize), new Map());
+		}
 		this.bookingsModel.bookings.forEach((bookings, index) => {
-			bookings.forEach((booking) => {
-				this.addViews([
-					CellView.from(
-						booking.index * cellWidth + (booking.offset ?? 0),
-						(this.cellsModel.multiHeads.length + index) * rowHeight,
-						booking.width ?? cellWidth,
-						rowHeight,
-						{
-							text: booking.text,
-							textSize: 10,
-							style: {
-								fillColor: bookingFillColor,
-								strokeColor: headStrokeColor
-							},
-							hoverStyle: {
-								fillColor: cellHoverColor,
-								strokeColor: headStrokeColor
-							},
-							focusStyle: {
-								fillColor: cellFocusColor,
-								strokeColor: headStrokeColor
-							}
-						},
-						{ hover: true, focus: true, move: true, stretch: true, delete: true },
-						undefined,
-						10
-					)
-				]);
+			const y = (this.cellsModel.multiHeads.length + index) * rowHeight;
+			const viewsTile = this.bookingViewsTiles.get(Math.floor(index / this.yFirstPageSize));
+			invariant(viewsTile, 'fail to get views tile');
+			const bookingViews = bookings.map((booking) => {
+				return newCellViewFrom(
+					booking.i * cellWidth + (booking.o ?? 0),
+					y,
+					booking.w ?? cellWidth,
+					rowHeight,
+					{
+						text: booking.t,
+						fillColor: booking.c,
+						strokeColor: COLOR.AISUMICHA,
+						hoverColor: booking.h
+					},
+					{ hover: true, focus: true, move: true, stretch: true, delete: true }
+				);
 			});
+			viewsTile.set(viewsTile.size, bookingViews);
 		});
+		logMeasureTime('Prepare Date', 'booking');
 
+		logMeasureTime();
 		this.columnModel.multiHeads.forEach((heads, index) => {
 			let xStart = 0;
 			heads.forEach((head) => {
-				this.addFixedViews([
-					CellView.from(
+				this.bookingKeyHeadViews.push(
+					newCellViewFrom(
 						xStart,
 						index * rowHeight,
 						head.width,
 						rowHeight,
 						{
 							text: head.text,
-							style: {
-								fillColor: headFillColor,
-								strokeColor: headStrokeColor
-							},
-							hoverStyle: {
-								fillColor: cellHoverColor,
-								strokeColor: headStrokeColor
-							}
+							fillColor: COLOR.SHIRONEZUMI,
+							strokeColor: COLOR.AISUMICHA
 						},
 						{ hover: true }
 					)
-				]);
+				);
 				xStart += head.width;
 			});
 		});
 		this.columnModel.rows.forEach((row, index) => {
 			let xStart = 0;
 			row.forEach((data) => {
-				this.addXFixedViews([
-					CellView.from(
+				this.bookingKeyViews.push(
+					newCellViewFrom(
 						xStart,
 						(this.columnModel.multiHeads.length + index) * rowHeight,
 						data.width,
 						rowHeight,
 						{
 							text: data.text,
-							style: {
-								fillColor: cellHoverColor,
-								strokeColor: headStrokeColor
-							},
-							hoverStyle: {
-								fillColor: cellFocusColor,
-								strokeColor: headStrokeColor
-							}
+							fillColor: COLOR.GOFUN,
+							strokeColor: COLOR.AISUMICHA
 						},
 						{ hover: true }
 					)
-				]);
+				);
 				xStart += data.width;
 			});
 		});
-	}
-
-	/**
-	 * 添加x轴和y轴fixed的视图，相对画布显示区域的定位的是不变的
-	 * @param views
-	 */
-	addFixedViews<T extends BaseView>(views: T[]) {
-		this.fixedViews.push(...views);
-	}
-
-	/**
-	 * 添加x轴fixed的视图，相对画布显示区域的x轴定位是不变的，适合用来绘制固定列
-	 * @param views
-	 */
-	addXFixedViews<T extends BaseView>(views: T[]) {
-		this.xFixedViews.push(...views);
-	}
-
-	/**
-	 * 添加y轴fixed的视图，相对画布显示区域的y轴定位是不变的，适合用来绘制表头
-	 * @param views
-	 */
-	addYFixedViews<T extends BaseView>(views: T[]) {
-		this.yFixedViews.push(...views);
-	}
-
-	prebuild(all = false) {
-		const start = Date.now();
-		const { frame } = this.ctx;
-		const { position } = this.controller;
-		const childrenScreen = frame.toOffset(-position.x, -position.y);
-		let viewInScreenNum = 0;
-		this.views.forEach((view) => {
-			if (all || view.inScreen(childrenScreen)) {
-				view.prebuild();
-				viewInScreenNum++;
-			}
-		});
-		this.fixedViews.forEach((view) => {
-			if (all || view.inScreen(childrenScreen)) {
-				view.prebuild();
-				viewInScreenNum++;
-			}
-		});
-		this.xFixedViews.forEach((view) => {
-			if (all || view.inScreen(childrenScreen)) {
-				view.prebuild();
-				viewInScreenNum++;
-			}
-		});
-		this.yFixedViews.forEach((view) => {
-			if (all || view.inScreen(childrenScreen)) {
-				view.prebuild();
-				viewInScreenNum++;
-			}
-		});
-		info('page prebuild', `(${viewInScreenNum})costs: ${Date.now() - start}`);
+		logMeasureTime('Prepare Date', 'staff');
 	}
 
 	render() {
@@ -252,41 +183,68 @@ export class CellPage extends BasePage {
 		let saveCount;
 		/* 先渲染中间的内容，因为其他三个部分都要覆盖在上面*/
 		saveCount = skCanvas.save();
-		logMT('page transform', () => {
-			this.transform.position.set(position.x, position.y);
-			this.transform.updateLocalTransform();
-			skCanvas.concat(this.transform.localTransform.toArray(false));
-		});
-		const childrenScreen = frame.toOffset(-position.x, -position.y);
-		const viewMap = new Map<number, BaseView[]>();
-		logMT('page sort', () => {
-			let num = 0;
-			this.views.forEach((child) => {
-				if (child.inScreen(childrenScreen)) {
-					viewMap.get(child.z)?.push(child) ?? viewMap.set(child.z, [child]);
-					num++;
+		this.transform.position.set(position.x, position.y);
+		this.transform.updateLocalTransform();
+		skCanvas.concat(this.transform.localTransform.toArray(false));
+		const childrenScreen = rectCopyWithOffset(frame, -position.x, -position.y);
+		this.skeletonViews.forEach((child) => {
+			if (child.frame.intersect(childrenScreen)) {
+				if (child.type === ViewType.Line) {
+					renderLine(skCanvas, child as LineView);
 				}
-			});
-			return num;
+			}
 		});
-		logMT('page render', () => {
-			const keys = Array.from(viewMap.keys()).sort();
-			keys.forEach((z) => {
-				viewMap.get(z)?.forEach((v) => {
-					v.render();
+		const yTop = childrenScreen.top;
+		const yBottom = childrenScreen.bottom;
+		const needRenderViews: BaseView[] = [];
+		logMeasureTime();
+		Array.from(this.bookingViewsTiles.keys()).forEach((index) => {
+			const actualY = index * this.yFirstPageSize * 24;
+			if (
+				actualY + this.yFirstPageSize * 24 >= yTop &&
+				actualY - this.yFirstPageSize * 24 <= yBottom
+			) {
+				const viewsTile = this.bookingViewsTiles.get(index);
+				invariant(viewsTile, 'fail to get viewsTile');
+				// todo 因为有二级分页，所以边界还可以更加详细判断是否渲染
+				// if (actualY >= yTop && actualY <= yBottom) {
+				viewsTile.forEach((vs) => {
+					vs.forEach((v) => {
+						if (v.frame.intersect(childrenScreen)) {
+							needRenderViews.push(v);
+						}
+					});
 				});
-			});
+				// }
+			}
 		});
+		logMeasureTime('Traverse', 'find need render views');
+		logMeasureTime();
+		let num = 0;
+		needRenderViews.forEach((v) => {
+			if (v.type === ViewType.Cell) {
+				renderCell(skCanvas, v as CellView);
+				num++;
+			}
+		});
+		logMeasureTime(`Render Cell(${num})`);
+
+		this.ctx.pageState.hoverCell.forEach((v) => {
+			renderCell(skCanvas, v as CellView);
+		});
+
 		skCanvas.restoreToCount(saveCount);
 
 		saveCount = skCanvas.save();
 		this.transform.position.set(position.x, 0);
 		this.transform.updateLocalTransform();
 		skCanvas.concat(this.transform.localTransform.toArray(false));
-		const yAScreen = frame.toOffset(-position.x, 0);
-		this.yFixedViews.forEach((child) => {
-			if (child.inScreen(yAScreen)) {
-				child.render();
+		const yAScreen = rectCopyWithOffset(frame, -position.x, 0);
+		this.bookingHeadViews.forEach((child) => {
+			if (child.frame.intersect(yAScreen)) {
+				if (child.type === ViewType.Cell) {
+					renderCell(skCanvas, child as CellView);
+				}
 			}
 		});
 		skCanvas.restoreToCount(saveCount);
@@ -295,17 +253,21 @@ export class CellPage extends BasePage {
 		this.transform.position.set(0, position.y);
 		this.transform.updateLocalTransform();
 		skCanvas.concat(this.transform.localTransform.toArray(false));
-		const xAScreen = frame.toOffset(0, -position.y);
-		this.xFixedViews.forEach((child) => {
-			if (child.inScreen(xAScreen)) {
-				child.render();
+		const xAScreen = rectCopyWithOffset(frame, 0, -position.y);
+		this.bookingKeyViews.forEach((child) => {
+			if (child.frame.intersect(xAScreen)) {
+				if (child.type === ViewType.Cell) {
+					renderCell(skCanvas, child as CellView);
+				}
 			}
 		});
 		skCanvas.restoreToCount(saveCount);
 
-		this.fixedViews.forEach((child) => {
-			if (child.inScreen(frame)) {
-				child.render();
+		this.bookingKeyHeadViews.forEach((child) => {
+			if (child.frame.intersect(frame)) {
+				if (child.type === ViewType.Cell) {
+					renderCell(skCanvas, child as CellView);
+				}
 			}
 		});
 
@@ -321,18 +283,31 @@ export class CellPage extends BasePage {
 	 * @param es
 	 */
 	findViewTop(pt: Point, es: EventSupport): BaseView | undefined {
+		const offset = this.transform.position;
+		const headHeight = this.cellsModel.height * this.cellsModel.multiHeads.length;
+		const actualY = pt.y - offset.y;
+		const actualBookingY = actualY - headHeight;
+		const tileIndex = Math.floor(actualBookingY / this.cellsModel.height / this.yFirstPageSize);
+		const tile = this.bookingViewsTiles.get(tileIndex);
+		if (!tile) return;
+		const tileOffset = Math.floor((actualBookingY / this.cellsModel.height) % this.yFirstPageSize);
+		const currentTileBookings = tile.get(tileOffset);
+		if (!currentTileBookings) return;
 		return (
-			findViewTop(this.fixedViews, pt, es, 0, 0) ??
-			findViewTop(this.xFixedViews, pt, es, 0, undefined) ??
-			findViewTop(this.yFixedViews, pt, es, undefined, 0) ??
-			findViewTop(this.views, pt, es, undefined, undefined)
+			findViewTop(this.bookingKeyHeadViews, pt, es, 0, 0) ??
+			findViewTop(this.bookingKeyViews, pt, es, 0, undefined) ??
+			findViewTop(this.bookingHeadViews, pt, es, undefined, 0) ??
+			findViewTop(currentTileBookings, pt, es, undefined, undefined)
 		);
 	}
 
 	clearViews() {
-		super.clearViews();
-		this.fixedViews = [];
-		this.xFixedViews = [];
-		this.yFixedViews = [];
+		this.bookingKeyHeadViews = [];
+		this.bookingKeyViews = [];
+		this.bookingHeadViews = [];
+	}
+
+	delete(view: BaseView): void {
+		console.log('delete ' + view);
 	}
 }

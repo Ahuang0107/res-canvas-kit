@@ -1,5 +1,4 @@
-import { Canvas, GrDirectContext, Surface } from '@skeditor/canvaskit-wasm';
-import { CanvasKitUtil, info } from '../utils';
+import { Canvas, GrDirectContext, Surface } from 'canvaskit-wasm';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Rect } from '../base/rect';
 import { Disposable } from '../base/disposable';
@@ -8,7 +7,8 @@ import { BasePage } from './page/base-page';
 import { PageState } from './page/page-state';
 import { debounceTime } from 'rxjs/operators';
 import { PointerController } from '../controller/poniter-controller';
-import { AnimaView } from './base/anima-view';
+import { CanvasKitUtil } from './utils';
+import { logMeasureTime } from '../utils';
 
 export class CanvasView extends Disposable {
 	static currentContext: CanvasView;
@@ -18,12 +18,10 @@ export class CanvasView extends Disposable {
 	pages: Map<string, BasePage> = new Map();
 	currentPageId = '';
 	frame = new Rect();
-	loading = false;
 	private readonly grContext: GrDirectContext;
 	private skSurface?: Surface;
 	private dpi = 1;
 	private dirty = true;
-	private loadingView: AnimaView;
 
 	protected constructor(private foreignEl: HTMLElement) {
 		super();
@@ -41,9 +39,6 @@ export class CanvasView extends Disposable {
 
 			new PointerController(this)
 		);
-
-		this.loadingView = AnimaView.new();
-		this.loadingView.prebuild();
 
 		const surface = CanvasKitUtil.CanvasKit.MakeOnScreenGLSurface(
 			this.grContext,
@@ -69,11 +64,7 @@ export class CanvasView extends Disposable {
 	startTick() {
 		const handler = () => {
 			if (this._disposed) return;
-			if (this.loading) {
-				this.loadingRender();
-			} else {
-				this.render();
-			}
+			this.render();
 			// requestAnimationFrame(handler);
 			setTimeout(handler, 16);
 		};
@@ -158,21 +149,21 @@ export class CanvasView extends Disposable {
 
 	private doResize(force = false) {
 		const bounds = this.foreignEl.getBoundingClientRect();
-		if (!force && this.frame.width === bounds.width && this.frame.height === bounds.height) {
+		if (!force && this.frame.w === bounds.width && this.frame.h === bounds.height) {
 			return;
 		}
 
 		const canvasEl = this.canvasEl$.value;
 
-		this.frame.width = bounds.width;
-		this.frame.height = bounds.height;
+		this.frame.w = bounds.width;
+		this.frame.h = bounds.height;
 		this.dpi = window.devicePixelRatio;
 
 		canvasEl.style.width = `${bounds.width}px`;
 		canvasEl.style.height = `${bounds.height}px`;
 
-		const canvasWidth = this.frame.width * this.dpi;
-		const canvasHeight = this.frame.height * this.dpi;
+		const canvasWidth = this.frame.w * this.dpi;
+		const canvasHeight = this.frame.h * this.dpi;
 
 		canvasEl.width = canvasWidth;
 		canvasEl.height = canvasHeight;
@@ -199,37 +190,22 @@ export class CanvasView extends Disposable {
 
 	private render() {
 		if (!this.dirty) return;
-		const start = Date.now();
 		this.createSkSurfaceAndCanvas();
 		if (!this.skSurface) return;
+		logMeasureTime();
 		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
 		if (this.currentPage) {
 			this.skCanvas.save();
 			this.skCanvas.scale(this.dpi, this.dpi);
-			this.currentPage?.prebuild();
+			logMeasureTime();
 			this.currentPage?.render();
+			logMeasureTime('Page Render');
 			this.skCanvas.restore();
+			logMeasureTime();
 			this.skSurface.flush();
+			logMeasureTime('Canvas Flush');
 		}
+		logMeasureTime('Total Render');
 		this.dirty = false;
-		info('total render', `costs: ${Date.now() - start}`);
-	}
-
-	// todo 从loading状态切换到非loading状态时，会有一段时间loading动画无法继续加载，
-	//  同时page view也还在加载，此时画面看上去是卡住的，这里该如何解决呢？
-	//  创建一个新的<canvas/>来渲染page view，渲染完后再把原来的<canvas/>替换掉？
-	private loadingRender() {
-		if (!this.loading) return;
-		const start = Date.now();
-		this.createSkSurfaceAndCanvas();
-		if (!this.skSurface) return;
-		this.skCanvas.clear(CanvasKitUtil.CanvasKit.TRANSPARENT);
-		this.skCanvas.save();
-		this.skCanvas.scale(this.dpi, this.dpi);
-		this.loadingView.resize();
-		this.loadingView.render();
-		this.skCanvas.restore();
-		this.skSurface.flush();
-		info('anima render', `costs: ${Date.now() - start}`);
 	}
 }

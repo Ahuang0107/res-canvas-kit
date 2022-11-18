@@ -1,11 +1,12 @@
-import { Disposable } from '../base/disposable';
-import { Point } from '../base/point';
-import { fromEvent } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
-import { CanvasView } from '../view/canvas-view';
-import { BaseView } from '../view/base/base-view';
-import { EventSupport } from '../view/base/event-support';
-import { StretchDirection } from '../view/base/stretch-direction';
+import {Disposable} from '../base/disposable';
+import {Point} from '../base/point';
+import {fromEvent} from 'rxjs';
+import {throttleTime} from 'rxjs/operators';
+import {CanvasView} from '../view/canvas-view';
+import {BaseView, stretchArea, stretchLeft, stretchRight} from '../view/base/base-view';
+import {EventSupport} from '../view/base/event-support';
+import {StretchDirection} from '../view/base/stretch-direction';
+import {rectOffset} from '../base/rect';
 
 // todo 交互事件一般伴随着更新后端数据，此时可能网络请求失败，需要进行回退操作，或者说网络请求成功时才进行
 // todo 增加cut事件，比如鼠标移动到列的竖线上时可以进行裁切，然后将当前的focus的所有view都进行裁切
@@ -59,13 +60,13 @@ export class PointerController extends Disposable {
 		// 当hover的view是当前focus的view，并且是CellView时，当pointer位置在两边时，pointer显示为col-resize
 		if (this.view.pageState.ifFocus(targetView)) {
 			if (targetView?.es.stretch) {
-				if (targetView.stretchArea(StretchDirection.LEFT)?.containsPoint(worldPt)) {
+				if (stretchArea(targetView, StretchDirection.LEFT)?.containsPoint(worldPt)) {
 					document.body.style.cursor = 'col-resize';
-				} else if (targetView.stretchArea(StretchDirection.RIGHT)?.containsPoint(worldPt)) {
+				} else if (stretchArea(targetView, StretchDirection.RIGHT)?.containsPoint(worldPt)) {
 					document.body.style.cursor = 'col-resize';
-				} else if (targetView.stretchArea(StretchDirection.TOP)?.containsPoint(worldPt)) {
+				} else if (stretchArea(targetView, StretchDirection.TOP)?.containsPoint(worldPt)) {
 					document.body.style.cursor = 'row-resize';
-				} else if (targetView.stretchArea(StretchDirection.BOTTOM)?.containsPoint(worldPt)) {
+				} else if (stretchArea(targetView, StretchDirection.BOTTOM)?.containsPoint(worldPt)) {
 					document.body.style.cursor = 'row-resize';
 				} else {
 					document.body.style.cursor = '';
@@ -73,6 +74,12 @@ export class PointerController extends Disposable {
 			}
 		} else {
 			document.body.style.cursor = '';
+		}
+
+		if (!targetView) {
+			this.view.pageState.hoverEmptyCell(pt);
+		} else {
+			this.view.pageState.hoverEmptyCell();
 		}
 
 		this.view.pageState.hoverLayer(targetView);
@@ -92,14 +99,16 @@ export class PointerController extends Disposable {
 		// 当mouse down的view是当前focus的view，并且是CellView时，
 		if (this.view.pageState.ifFocus(targetView)) {
 			let sd: StretchDirection | undefined = undefined;
-			if (targetView?.stretchArea(StretchDirection.LEFT)?.containsPoint(worldPt)) {
-				sd = StretchDirection.LEFT;
-			} else if (targetView?.stretchArea(StretchDirection.RIGHT)?.containsPoint(worldPt)) {
-				sd = StretchDirection.RIGHT;
-			} else if (targetView?.stretchArea(StretchDirection.TOP)?.containsPoint(worldPt)) {
-				sd = StretchDirection.TOP;
-			} else if (targetView?.stretchArea(StretchDirection.BOTTOM)?.containsPoint(worldPt)) {
-				sd = StretchDirection.BOTTOM;
+			if (targetView) {
+				if (stretchArea(targetView, StretchDirection.LEFT)?.containsPoint(worldPt)) {
+					sd = StretchDirection.LEFT;
+				} else if (stretchArea(targetView, StretchDirection.RIGHT)?.containsPoint(worldPt)) {
+					sd = StretchDirection.RIGHT;
+				} else if (stretchArea(targetView, StretchDirection.TOP)?.containsPoint(worldPt)) {
+					sd = StretchDirection.TOP;
+				} else if (stretchArea(targetView, StretchDirection.BOTTOM)?.containsPoint(worldPt)) {
+					sd = StretchDirection.BOTTOM;
+				}
 			}
 			if (sd !== undefined) {
 				document.body.style.cursor = 'col-resize';
@@ -118,7 +127,7 @@ export class PointerController extends Disposable {
 			const mousePos = new Point(event.offsetX, event.offsetY);
 			const offset = mousePos.compare(this.lastMousePos);
 			this.view.pageState.focusingViews.forEach((v) => {
-				v.offset(offset.x, offset.y);
+				rectOffset(v.frame, offset.x, offset.y);
 			});
 			this.view.markDirty();
 		}
@@ -133,11 +142,11 @@ export class PointerController extends Disposable {
 		const offset = pt.compare(this.lastMousePos);
 		if (this.view.pageState.stretchDirection === StretchDirection.LEFT) {
 			this.view.pageState.focusingViews.forEach((v) => {
-				v.stretchLeft(-offset.x);
+				stretchLeft(v, -offset.x);
 			});
 		} else if (this.view.pageState.stretchDirection === StretchDirection.RIGHT) {
 			this.view.pageState.focusingViews.forEach((v) => {
-				v.stretchRight(offset.x);
+				stretchRight(v, offset.x);
 			});
 		}
 		this.view.markDirty();

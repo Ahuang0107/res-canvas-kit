@@ -1,32 +1,27 @@
-type LogLabel =
-	| 'font'
-	| 'total render'
-	| 'anima render'
-	| 'page transform'
-	| 'page sort'
-	| 'page render'
-	| 'load'
-	| 'page prebuild'
-	| 'unknown';
-const OPEN_LOG_LABELS: LogLabel[] = [
-	// 'font',
-	// 'total render',
-	// 'anima render'
-	// 'page transform',
-	// 'page sort',
-	// 'page render'
-	// 'load'
-	// 'page prebuild'
-];
+import invariant from 'ts-invariant';
 
-export function info(label: LogLabel, message: string) {
-	if (OPEN_LOG_LABELS.includes(label)) {
-		console.info(`[${label}] ${message}`);
-	}
+export function info(label = 'Unknown', message = '') {
+	console.info(`[${label}] ${message}`);
 }
 
-export function logMT(label: LogLabel = 'unknown', op: () => number | void, message = '') {
-	const start = Date.now();
-	const num = op();
-	info(label, message + `costs(${num}): ${Date.now() - start}`);
+const timer: number[] = [];
+
+/**
+ * 不传递任何参数开始一次 time measure
+ * 传递参数结束一次 time measure 并输出日志
+ * @param label
+ * @param message
+ */
+export function logMeasureTime(label?: string, message?: string) {
+	if (!label) {
+		timer.push(Date.now());
+	} else {
+		const time = timer.pop();
+		invariant(time, 'calling measure end time more than measure start time');
+		if (!message) {
+			console.info(`[${label}] cost: ${Date.now() - time}`);
+		} else {
+			console.info(`[${label}] ${message} cost: ${Date.now() - time}`);
+		}
+	}
 }

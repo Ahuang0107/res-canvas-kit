@@ -1,23 +1,40 @@
-import { BaseView } from '../../view/base/base-view';
-import { ComponentCaches, DrawCache, LineCache } from '../../view/base/cache';
+import { BaseView, getBaseViewId, ViewType } from '../../view/base/base-view';
 import { Rect } from '../../base/rect';
-import { Color } from '@skeditor/canvaskit-wasm';
-import { CanvasKitUtil } from '../../utils';
+import { CanvasKitUtil, COLOR } from '../../view/utils';
+import { Canvas } from 'canvaskit-wasm';
 
-export class LineView extends BaseView {
-	constructor(frame: Rect, private fillColor?: Color, z?: number) {
-		super(frame, z);
-	}
+export type LineView = BaseView & {
+	lineColor: COLOR;
+};
 
-	protected build(): ComponentCaches {
-		const cache: DrawCache[] = [];
-		if (this.fillColor) {
-			const fillPaint = new CanvasKitUtil.CanvasKit.Paint();
-			fillPaint.setColor(this.fillColor);
-			cache.push(new LineCache(this.frame, fillPaint));
-		}
-		return {
-			cache: cache
-		};
-	}
+export function newLineViewFromH(x: number, y: number, w: number): LineView {
+	return {
+		id: getBaseViewId().toString(),
+		type: ViewType.Line,
+		frame: new Rect(x, y, w, 0),
+		es: {},
+		sp: [undefined, undefined, undefined, undefined],
+		lineColor: COLOR.SHIRONEZUMI
+	};
+}
+
+export function newLineViewFromV(x: number, y: number, h: number): LineView {
+	return {
+		id: getBaseViewId().toString(),
+		type: ViewType.Line,
+		frame: new Rect(x, y, 0, h),
+		es: {},
+		sp: [undefined, undefined, undefined, undefined],
+		lineColor: COLOR.SHIRONEZUMI
+	};
+}
+
+export function renderLine(canvas: Canvas, view: LineView) {
+	canvas.drawLine(
+		view.frame.left,
+		view.frame.top,
+		view.frame.right,
+		view.frame.bottom,
+		CanvasKitUtil.fillPaint(view.lineColor)
+	);
 }

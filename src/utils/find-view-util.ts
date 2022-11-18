@@ -1,6 +1,6 @@
 import { Point } from '../base/point';
 import { EventSupport } from '../view/base/event-support';
-import { BaseView } from '../view/base/base-view';
+import { BaseView, containsPoint } from '../view/base/base-view';
 
 /**
  * 搜索Top的View
@@ -20,15 +20,10 @@ export function findViewTop(
 	offsetX?: number,
 	offsetY?: number
 ): BaseView | undefined {
-	const hoverViews = [];
-	// todo 因为z轴允许是负数，所以这里的判断起码要将maxZ设置成一个足够小的数
-	let maxZ = -999;
 	for (let i = views.length - 1; i >= 0; i--) {
 		const layer = views[i];
-		if (layer.containsPoint(pt, es, offsetX, offsetY)) {
-			maxZ = Math.max(maxZ, layer.z);
-			hoverViews.push(layer);
+		if (containsPoint(layer, pt, es, offsetX, offsetY)) {
+			return layer;
 		}
 	}
-	return hoverViews.find((v) => v.z == maxZ);
 }
