@@ -1,46 +1,14 @@
-import { COLOR } from '../../view/utils';
+/**
+ * 多个key以及和key一对一关联的Row数据组成的Rows就是一个表格
+ */
+export type Rows = Map<string, Row>;
 
-// 用来生成Model 1
-export type CellsModel = {
-	// 每个cell的长度
-	width: number;
-	// 每个cell的高度
-	height: number;
-	multiHeads: HeadModel[][];
-	columnLineFollowHeadIndex: number;
-};
+/**
+ * 一个Row有多个key以及和key一对一关联的bookings数据
+ */
+export type Row = Map<string, Booking[]>;
 
-type HeadModel = {
-	index: number;
-	text: string;
-	width?: number;
-};
-
-// 用来生成Model 2
-export type BookingsModel = {
-	// booking组成的二维数组
-	bookings: CellModel[][];
-};
-
-// booking数据对应Model
-type CellModel = {
-	i: number;
-	w?: number;
-	o?: number;
-	t?: string;
-	c?: COLOR;
-	h?: COLOR;
-};
-
-type WidthCellModel = {
-	width: number;
-	text?: string;
-};
-
-// 用来生成Model 3
-export type ColumnModel = {
-	// 包含列名和列宽信息
-	multiHeads: WidthCellModel[][];
-	// 数据的二维数组
-	rows: WidthCellModel[][];
+export type Booking = {
+	start: number;
+	end: number;
 };

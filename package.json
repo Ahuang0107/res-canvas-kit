@@ -7,7 +7,7 @@
     "/dist"
   ],
   "scripts": {
-    "preview": "vite ./preview --port=25050",
+    "preview": "vite --config vite.config.ts ./preview --port=25050",
     "build": "rimraf dist && tsc && copyfiles -u 1 src/assets/fonts/*.ttf dist/",
     "test": "vitest"
   },
@@ -22,6 +22,8 @@
     "tslib": "^2.4.1",
     "typescript": "^4.8.4",
     "vite": "^3.2.2",
+    "vite-plugin-top-level-await": "^1.2.2",
+    "vite-plugin-wasm": "^3.1.0",
     "vitest": "^0.25.0"
   },
   "type": "module",
@@ -29,6 +31,7 @@
     "bowser": "1.9.2",
     "canvaskit-wasm": "^0.37.2",
     "moment": "^2.29.4",
+    "res-canvas-kit-datetime": "file:../../rust-project/res-canvas-kit-datetime/pkg",
     "rxjs": "6.2.1",
     "ts-invariant": "^0.10.3"
   }

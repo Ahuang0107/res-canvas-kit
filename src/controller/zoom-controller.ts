@@ -38,6 +38,8 @@ export class ZoomController extends Disposable {
 	}
 
 	onOffset(offset: Point): void {
+		offset.x = offset.x - (offset.x % 32);
+		offset.y = offset.y - (offset.y % 24);
 		// nextPoint 指可见screen相对于origin的位置，screen向下移动时，nextPoint.y是负数
 		const nextPoint = this.position.minus(offset);
 		if (this.option) {

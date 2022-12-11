@@ -4,6 +4,13 @@ A reservation data render library base on canvaskit-wasm.
 
 ## Architecture
 
+- 因为宽高固定，所以可以计算得到当前屏幕需要显示第几行开始，第几列开始，一共多少行多少列的数据
+- 可以减少滚轮移动时视窗的移动的距离大小
+- 每次视图一移动，移动结束时将是否渲染和是否能交互置为false，然后通知业务端新的数据从第几行第几列开始，拿到数据后再重新渲染，
+  渲染完再重新将是否能交互置为false
+- 需要处理时间，所以需要一个专门处理时间的util(希望用rust写，但需要解决现在wasm对类型支持羸弱的问题，之后再写)
+-
+
 ![architecture](./doc/architecture.png)
 
 ## BenchMark
